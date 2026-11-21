@@ -22,10 +22,10 @@ All prices, sellers, delivery promises, registry codes and attestations in this 
 
 Product name and reference image are credited to POP MART. The character belongs to THE MONSTERS by Kasing Lung. This independent demonstration uses the **Exciting Macaron** series as a product reference. [Official series and Green Grape image](https://www.popmart.com/us/products/675/THE-MONSTERS---Exciting-Macaron-Vinyl-Face-Blind-Box).
 
-The GitHub Pages version uses sample data and a recorded Jev result when available. Opening the public site incurs zero model calls. Optional live functionality runs through the separate local backend.
+The published site evaluates the selected terms directly in the browser. Duixi Core’s source-linked follow-ups are recorded outputs of its local text rules.
 
-The faint architectural background is a crop of Pieter Bruegel the Elder’s *The Tower of Babel* (1563), Kunsthistorisches Museum, Vienna. [Artwork source](https://commons.wikimedia.org/wiki/File:Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_(Vienna)_-_Google_Art_Project_-_edited.jpg).
+The full-colour architectural image is a crop of Pieter Bruegel the Elder’s *The Tower of Babel* (1563), Kunsthistorisches Museum, Vienna. [Artwork source](https://commons.wikimedia.org/wiki/File:Pieter_Bruegel_the_Elder_-_The_Tower_of_Babel_(Vienna)_-_Google_Art_Project_-_edited.jpg).
 
 ### Read API
 
-The CDN serves versioned JSON for [the catalog](https://openclaw-d.github.io/postbabel/api/v1/catalog.json), [the sourcing brief](https://openclaw-d.github.io/postbabel/api/v1/sourcing.json), [the collector verdict](https://openclaw-d.github.io/postbabel/api/v1/verdict.json) and [Jev receipt status](https://openclaw-d.github.io/postbabel/api/v1/jev-base.json). Recorded model decisions can be reused without another paid request. The original-language source quote, monetary assumptions and missing evidence are available in the response.
+The CDN serves versioned JSON for [the catalog](https://openclaw-d.github.io/postbabel/api/v1/catalog.json), [the sourcing brief](https://openclaw-d.github.io/postbabel/api/v1/sourcing.json), [the collector verdict](https://openclaw-d.github.io/postbabel/api/v1/verdict.json) and [call follow-ups](https://openclaw-d.github.io/postbabel/api/v1/call-review.json). The original-language source quote, monetary assumptions and missing evidence are available in the response.

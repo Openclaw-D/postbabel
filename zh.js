@@ -1,8 +1,8 @@
 (function(root){
   "use strict";
   const messages = {
+  "Choose your requirements to compare each offer with its written terms.": "选好条件，就能对照每份报价写明的条款。",
   "The purchase brief includes an invoice. Supply authorisation is still pending.": "采购简报附有发票，供货授权仍待核实。",
-  "Enable field review in integration settings.": "在集成设置中开启实时字段核验。",
   "Enable testnet access in integration settings.": "在集成设置中开启测试网连接。",
   "Integration settings": "集成设置",
   "On this page": "页内导航",
@@ -108,7 +108,6 @@
   "English field gloss": "英文术语释义",
   "English source. Numeric and packaging fields are preserved for checks.": "原文为英文。数字和包装描述已保留，供后续核验。",
   "Full glossary": "查看完整术语表",
-  "Optional live field review": "可选实时字段复核",
   "SIMULATED registry": "模拟登记库",
   "Scratch-code registry": "防伪码登记库",
   "First-edition batch matches the sample registry.": "首批批次与模拟登记信息相符。",
@@ -161,7 +160,6 @@
   "Later restock": "后续补货",
   "Review": "待核验",
   "Rejected": "未通过",
-  "Jev cross-check": "Jev 交叉核验",
   "Try all-fail scenario": "测试全部不通过",
   "Restore sample offers": "恢复模拟挂牌",
   "Base Sepolia · chain 84532": "Base Sepolia · 链 ID 84532",
@@ -302,16 +300,10 @@
   "An estimate, with no firm cutoff.": "估计时间，尚无确定截止日期。",
   "About this demo": "关于本演示",
   "Replay runs in your browser using four simulated listings. The product photo and series name are credited to": "浏览器使用四条模拟挂牌进行回放。产品图片和系列名称来自",
-  "Open the verdict to inspect the Jev cross-check for the same two sample offers.": "在裁决页可查看 Jev 对同两条模拟挂牌的交叉核验。",
   "A live result has not been recorded for these listings. The verdict on this page uses the simulated registry, batch and seller evidence.": "这组挂牌尚无实测回执。当前裁决依据模拟登记库、批次和卖家证据生成。",
   "Two synthetic offers are evaluated together. The public demo never calls a paid API.": "两条模拟挂牌在同一请求中核验。公开演示仅回放结果。",
-  "Use the local project setup to run a test with your own Jev credential.": "在本机设置中可用自己的 Jev 密钥运行一次测试。",
   "Optional integrations": "可选集成设置",
   "Replay works offline. Enable an integration only when you intend to use your own service.": "演示支持离线使用。需要调用自己的服务时，可在这里启用集成。",
-  "Optional live translation review": "实时翻译复核",
-  "OpenAI-compatible HTTPS base URL": "兼容 OpenAI 的 HTTPS 服务地址",
-  "Model ID": "模型 ID",
-  "API key · this tab only": "API 密钥 · 仅当前标签页",
   "Optional Base Sepolia live anchor · testnet only": "可选 Base Sepolia 锚定 · 仅测试网",
   "Testnet burner key · this tab only": "测试网临时私钥 · 仅当前标签页",
   "A live anchor requires test ETH for gas. No payment or marketplace order is placed.": "实时锚定需要测试 ETH 支付 gas。演示不涉及购物下单。",
@@ -324,17 +316,11 @@
   "Version withheld by the integrity or held-out guard.": "完整性或留出集检查未通过，已暂缓记录新版本。",
   "Version accepted · added to claim tape": "新版本已通过并写入证据记录",
   "Replay complete": "演示结束",
-  "Complete the optional API settings first.": "请先完成可选 API 设置。",
   "Use a plain HTTPS base URL.": "请提供有效的 HTTPS 服务地址。",
-  "Send source text to your provider": "将原文发送给服务商",
   "The listing text will go to": "挂牌文本将发送至",
   "using": "使用模型",
   ". Your provider may charge for this request.": "。服务商可能对本次请求计费。",
-  "Send for field review": "发送并复核字段",
-  "Enable an HTTPS provider in Settings.": "请在设置中启用 HTTPS 服务商。",
   "Waiting for your provider…": "等待服务商响应…",
-  "No field review returned.": "未收到字段复核结果。",
-  "Optional live review": "实时复核",
   "Advisory translation. Registry decisions use the local evidence.": "译文供参考，登记核验以本地证据为依据。",
   "Configure a Base Sepolia testnet burner in Settings.": "请先在设置中配置 Base Sepolia 测试网临时钱包。",
   "Create the dry-run checkpoint first.": "请先创建模拟检查点。",
@@ -347,7 +333,6 @@
   "Testnet submission": "测试网提交结果",
   "View submitted transaction": "查看已提交的交易",
   "Submission failed. Check the testnet balance and RPC connection. The dry-run record remains available.": "提交失败，请检查测试网余额和 RPC 连接。模拟记录仍可查看。",
-  "Provide an HTTPS endpoint, model and API key.": "请填写 HTTPS 地址、模型和 API 密钥。",
   "Supply a valid testnet burner key.": "请填写有效的测试网临时私钥。",
   "Optional signing library unavailable.": "未能加载可选签名组件。",
   "Diagnostics": "自检",
@@ -402,7 +387,6 @@
   "The workspace runs in your browser with simulated quotes and listings. The product photo and series name are credited to": "工作台在浏览器内运行，使用模拟报价与挂牌。产品图片和系列名称来自",
   "The workspace works offline. Enable an integration only when you intend to use your own service.": "工作台支持离线使用。需要调用自己的服务时，可在这里启用集成。",
   "A live result has not been recorded for these supplier quotes. Each evidence gap comes from the sample brief.": "这些供应商报价尚无实时核验回执，缺失项依据采购样例逐条列出。",
-  "The public site reads cached results. Paid inference runs separately.": "线上页面读取缓存结果，付费推理在服务端单独执行。",
   "All required fields have supporting evidence.": "每个必填字段都有凭证。"
 };
 
@@ -430,8 +414,6 @@
     [/^Independent SHA-256 vector (\d+)$/, n => '独立 SHA-256 测试向量 '+n],
     [/^(PB-[\w-]+) \/ (\w+)$/, (id,type) => id+' / '+term(type)],
     [/^Provider returned HTTP (\d+)$/, n => '服务商返回 HTTP '+n],
-    [/^Recorded live test · (.+)$/, model => '已记录实测 · '+model],
-    [/^· (\d+)% model confidence$/, n => '· 模型置信度 '+n+'%']
   ];
   function term(source){return Object.hasOwn(messages,source)?messages[source]:source;}
   function translate(source){

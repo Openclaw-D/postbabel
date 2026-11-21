@@ -1,1 +1,1 @@
-{"schema":1,"mode":"synthetic","catalog":"catalog.json","sourcing":"sourcing.json","verdict":"verdict.json","jev":{"resale":"jev-base.json","sourcing":"jev-sourcing.json"},"callReview":"call-review.json"}
+{"schema":1,"mode":"synthetic","catalog":"catalog.json","sourcing":"sourcing.json","verdict":"verdict.json","callReview":"call-review.json"}
