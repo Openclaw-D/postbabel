@@ -1,0 +1,21 @@
+# This public Pages repository contains the demo frontend and anonymous fixtures.
+*
+!.gitignore
+!.nojekyll
+!README.md
+!index.html
+!style.css
+!data.js
+!views.js
+!app.js
+!engine.js
+!selftest.js
+!lib/
+!lib/sha256.js
+!lib/ethers.umd.min.js
+!lib/ethers-LICENSE.md
+!assets/
+!assets/labubu-green-grape.webp
+!fixtures/
+!fixtures/jev.json
+!fixtures/listings.json
