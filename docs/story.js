@@ -29,7 +29,7 @@
     return `<section class="storyHero" aria-labelledby="storyTitle">
       <div class="storyHeroCopy">
         <h1 id="storyTitle"><span>${esc(brief.quantity)} LABUBUs.</span> <br><span>Who can deliver?</span></h1>
-        <p>Your budget is ${esc(usd(brief.unitBudget))} per LABUBU figure. Three suppliers reply in Chinese. Check which terms each one puts in writing.</p>
+        <p>Your budget is ${esc(usd(brief.unitBudget))} per LABUBU figure. ${brief.offers.length} ${brief.offers.length===1?'supplier replies':'suppliers reply'} in Chinese. Check which terms each one puts in writing.</p>
         <a class="storyPrimary" href="#sourcingFlow">Compare quotes for ${esc(brief.quantity)} units</a>
       </div>
       <figure class="towerArt">
@@ -333,7 +333,7 @@
     [/^(\d+) LABUBUs\.$/, n => n + ' 只 LABUBU，'],
     [/^Only (.+) meets every selected requirement as written\.$/, name => '只有「' + zh(name) + '」的书面报价符合全部所选条件。'],
     [/^(\d+) offers meet every selected requirement\.$/, n => '有 ' + n + ' 份报价符合全部所选条件。'],
-    [/^Your budget is (\$[\d.,]+) per LABUBU figure\. Three suppliers reply in Chinese\. Check which terms each one puts in writing\.$/, price => '每只 LABUBU 的预算是 ' + price + '。三家供应商用中文回复了询价，看看各家书面确认了哪些条件。'],
+    [/^Your budget is (\$[\d.,]+) per LABUBU figure\. (\d+) suppliers? repl(?:y|ies) in Chinese\. Check which terms each one puts in writing\.$/, (price,n) => '每只 LABUBU 的预算是 ' + price + '。' + n + ' 家供应商用中文回复了询价，看看各家书面确认了哪些条件。'],
     [/^Compare quotes for (\d+) units$/, n => '比较 ' + n + ' 只的采购报价'],
     [/^(\d+) units of LABUBU Green Grape$/, n => n + ' 只 LABUBU 绿葡萄'],
     [/^Up to (\$[\d.,]+) per unit, all from the same edition\. Freight and taxes are outside the unit budget\.$/, price => '每只最多 ' + price + '，须为同一版次。单价预算不含运费和税费。'],

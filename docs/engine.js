@@ -83,7 +83,7 @@
       if(Number.isInteger(row.facts.price)&&row.facts.price>=0){
         const price=row.facts.price;row.facts={...row.facts,price:price%10===9?price-1:price+1};
       }else{
-        row.lang=row.lang==='en'?'es':'zh'===row.lang?'za':'en';
+        row.lang=row.lang==='en'?'es':row.lang==='zh'?'de':'en';
       }
     }
     restore(){this.rows=this.originals.map(x=>JSON.parse(JSON.stringify(x)));}

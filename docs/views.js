@@ -12,7 +12,7 @@ function field(k,v,zh){
  return '<div class="field"><small>'+esc(k)+'</small><div>'+value+'</div></div>';
 }
 function money(n){return Number.isFinite(n)?'$'+n:'Unknown';}
-function dayCount(n){return n+(Number(n)===1?' day':' days');}
+function dayCount(n){const v=Number(n);return Number.isFinite(v)?v+(v===1?' day':' days'):'Unknown';}
 function eta(n){return n===42?'6 weeks':Number.isFinite(n)?dayCount(n):'Unknown';}
 function cap(k,h,p){return '<header class="viewhead"><div class="kicker">'+esc(k)+'</div><h1>'+esc(h)+'</h1><p>'+esc(p)+'</p></header>';}
 const steps=['Listing','Typed claims','Translation','Checks','Verdict','Anchor','Follow-up'];

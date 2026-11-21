@@ -151,7 +151,7 @@ async function broadcast(){
   const wallet=new ethers.Wallet(o.burner,provider),tx=await wallet.sendTransaction({to:wallet.address,value:0n,chainId:84532n,data:ethers.hexlify(ethers.toUtf8Bytes(a.facts.calldata))});
   await add('PB-A-02','anchor','system',{mode:'LIVE TESTNET · submitted',root:a.facts.root,calldata:a.facts.calldata,chainId:84532,txHash:tx.hash});
   openDialog('Testnet submission','<a rel="noopener noreferrer" target="_blank" href="https://sepolia.basescan.org/tx/'+encodeURIComponent(tx.hash)+'">View submitted transaction</a>');render();
- }catch{openDialog('Testnet submission','<p>Submission failed. Check the testnet balance and RPC connection. The dry-run record remains available.</p>');}finally{provider.destroy();}
+ }catch{openDialog('Testnet submission','<p>Submission failed. Check the testnet balance and RPC connection. The dry-run record remains available.</p><div class="actions">'+V.btn('confirmAnchor','Retry broadcast','primary')+'</div>');}finally{provider.destroy();}
 }
 function localBackend(){return document.documentElement.dataset.backend==='simulation'&&['127.0.0.1','localhost'].includes(location.hostname);}
 async function loadCatalog(){
@@ -161,7 +161,8 @@ async function loadCatalog(){
   const res=await fetch(endpoint,{signal:AbortSignal.timeout(1800)});
   if(!res.ok)return;
   const data=await res.json();
-  if(data.mode==='SIMULATED WEB DATA'&&Array.isArray(data.offers)&&data.offers.length===D.offers.length&&data.offers.every((o,i)=>o.key===D.offers[i].key&&typeof o.source==='string'))D.offers.splice(0,D.offers.length,...data.offers);
+  const shape=o=>o&&typeof o==='object'&&typeof o.name==='string'&&typeof o.source==='string'&&typeof o.code==='string'&&typeof o.stamp==='string'&&typeof o.identity==='string'&&typeof o.photo==='string'&&Number.isFinite(o.price)&&(o.days===null||Number.isFinite(o.days))&&(o.ship===null||Number.isFinite(o.ship))&&(o.duty===null||Number.isFinite(o.duty));
+  if(data.mode==='SIMULATED WEB DATA'&&Array.isArray(data.offers)&&data.offers.length===D.offers.length&&data.offers.every((o,i)=>o.key===D.offers[i].key&&shape(o)))D.offers.splice(0,D.offers.length,...data.offers);
   if(data.brief?.id===D.brief.id&&Array.isArray(data.brief.offers)&&data.brief.offers.length===3&&data.brief.offers.every(o=>o.evidence&&o.logistics&&typeof o.source==='string'&&typeof o.translation==='string'))state.brief=data.brief;
  }catch{/* The bundled catalog also supports offline replay. */}
 }
