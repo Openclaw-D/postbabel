@@ -99,6 +99,26 @@
     const eligible=rows.filter(o=>o.qualified&&Number.isFinite(o.days)).sort((a,b)=>a.days-b.days||a.price-b.price);
     return {rows,winner:eligible[0]||null,alternative:rows.find(x=>x.key==='official'&&x.codeState==='unused'&&x.identity==='Official sample')||null};
   }
+  function assessQuote(offer,brief){
+    const labels={supply:'Authorized supply evidence is missing.',edition:'The edition is unspecified.',stock:'Available stock is unconfirmed.'};
+    const required=['edition','stock','supply'];
+    const missing=required.filter(field=>offer.evidence[field]!=='documented');
+    const source=offer.source||'';
+    const openTerms={
+      edition:/具体版次待确认/,
+      stock:/等仓库确认库存/,
+      supply:/授权供货凭证稍后提供/
+    };
+    const primary=missing.find(field=>openTerms[field].test(source))||missing[0];
+    const match=primary&&source.match(openTerms[primary]);
+    const span=match?{doc:offer.ref,start:match.index,end:match.index+match[0].length}:null;
+    const price=source.match(/单价\s*(\d+(?:\.\d+)?)\s*美元/);
+    const priceSpan=price?{doc:offer.ref,start:price.index,end:price.index+price[0].length}:null;
+    const unitPrice=price?Number(price[1]):offer.unitPrice;
+    const perUnitDelta=unitPrice-brief.unitBudget;
+    return {perUnitDelta,subtotal:brief.quantity*unitPrice,missing,span,priceSpan,gap:labels[primary]||'All required fields have supporting evidence.',
+      eligible:missing.length===0&&perUnitDelta<=0,commitment:/没问题|能安排/.test(source)?'acknowledgement only':'review source'};
+  }
   function customOffer(text){
     const p=parse(text),days=p.eta?.match(/\d+/);
     return {key:'custom',id:'PB-L-05',name:'Your listing',channel:'Pasted text',price:p.price,days:days?Number(days[0]):p.eta==='six weeks'?42:null,
@@ -110,6 +130,6 @@
   }
   function calldata(rootHash,id){return 'POSTBABEL|1|'+rootHash+'|'+id;}
   function fixedBodies(){return ['listing','translation','check','verdict'].map((kind,i)=>({v:1,id:'TEST-'+i,kind,actor:{role:'system',id:'selftest'},ts:1700000000000+i,lang:'en',span:null,facts:{i,note:'Fern'},confidence:null,severity:'info'}));}
-  const api={zero,canonical,hash,seal,verifyTape,Tape,getGloss,parse,evaluate,lineup,customOffer,claim,calldata,fixedBodies,hex};
+  const api={zero,canonical,hash,seal,verifyTape,Tape,getGloss,parse,evaluate,lineup,assessQuote,customOffer,claim,calldata,fixedBodies,hex};
   root.PB=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);

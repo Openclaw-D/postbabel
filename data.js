@@ -15,7 +15,7 @@
   ];
   const questions={
     en:['Could you photograph the scratch-code panel and its status in the registry?','Could you show the batch stamp beside the Exciting Macaron box label?','Could you show the inner bag seal and confirm the delivered total and arrival date?'],
-    zh:['请拍下盒底防伪码区和核验状态。','请把批次钢印和 心动马卡龙盒标放在同一张照片里。','请拍内袋封口，并确认含运费税费的总价和到货日期。']
+    zh:['请拍下盒底防伪码区和核验状态。','请把批次钢印和心动马卡龙盒标放在同一张照片里。','请拍内袋封口，并确认含运费税费的总价和到货日期。']
   };
   const categories=['edition','code','jargon','number','pragmatics'];
   const cases=[
@@ -28,6 +28,58 @@
   const versions=[41,61,78,86];
   // Captured fixture scores. Symmetric offsets preserve each published column mean.
   const matrix=Array.from({length:30},(_,i)=>({name:cases[i%5][Math.floor(i/5)],category:categories[i%5],heldOut:i>=10,scores:versions.map((v,j)=>v+([-4,2,0,4,-2][i%5])*(j===0?2:1))}));
-  const data={product:{name:"LABUBU · Green Grape",series:"THE MONSTERS · Exciting Macaron",officialUrl:"https://www.popmart.com/us/products/675/THE-MONSTERS---Exciting-Macaron-Vinyl-Face-Blind-Box"},offers,registry,glossary,questions,categories,versions,matrix};
+  const brief={
+  "id": "PB-BRIEF-100",
+  "quantity": 100,
+  "unitBudget": 40,
+  "currency": "USD",
+  "product": "LABUBU Green Grape",
+  "terms": "Same edition. Freight and taxes excluded.",
+  "offers": [
+    {
+      "id": "A",
+      "ref": "Q-A.0",
+      "unitPrice": 38,
+      "en": "Please provide the source of the stock and evidence of authorized supply for all 100 pieces.",
+      "zh": "请提供这 100 件商品的货源信息和授权供货凭证。",
+      "evidence": {
+        "edition": "not supplied",
+        "stock": "not supplied",
+        "supply": "not supplied"
+      },
+      "source": "没问题，都能安排。100 只绿葡萄同版，单价 38 美元。授权供货凭证稍后提供。",
+      "translation": "We can arrange 100 of the same Green Grape edition at $38 each. Supply authorisation paperwork will follow."
+    },
+    {
+      "id": "B",
+      "ref": "Q-B.0",
+      "unitPrice": 35,
+      "en": "Please confirm the exact edition and show the batch label for the 100 pieces quoted.",
+      "zh": "请确认这 100 件的具体版次，并提供对应的批次标签。",
+      "evidence": {
+        "edition": "not supplied",
+        "stock": "not supplied",
+        "supply": "not supplied"
+      },
+      "source": "绿葡萄可报 100 只，单价 35 美元。具体版次待确认。",
+      "translation": "We can quote 100 Green Grapes at $35 each. The exact edition still needs confirmation."
+    },
+    {
+      "id": "C",
+      "ref": "Q-C.0",
+      "unitPrice": 42,
+      "en": "Please confirm stock for all 100 pieces, the dispatch date, and whether you can meet USD 40 per unit.",
+      "zh": "请确认 100 件的库存、发货时间，以及单价能否控制在 40 美元以内。",
+      "evidence": {
+        "edition": "not supplied",
+        "stock": "not supplied",
+        "supply": "not supplied"
+      },
+      "source": "同版绿葡萄单价 42 美元。100 只能否全发，要等仓库确认库存。",
+      "translation": "The same edition is $42 each. The warehouse still needs to confirm stock for all 100."
+    }
+  ]
+};
+  const data={brief,product:{name:"LABUBU · Green Grape",series:"THE MONSTERS · Exciting Macaron",officialUrl:"https://www.popmart.com/us/products/675/THE-MONSTERS---Exciting-Macaron-Vinyl-Face-Blind-Box"},offers,registry,glossary,questions,categories,versions,matrix};
   root.PBData=data;if(typeof module!=='undefined')module.exports=data;
 })(globalThis);

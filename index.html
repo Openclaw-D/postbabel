@@ -5,10 +5,10 @@
 <meta name="theme-color" content="#ffffff"><title>PostBabel · Claim Tape</title>
 <link rel="icon" href="data:,"><link rel="preload" as="image" href="assets/labubu-green-grape.webp" fetchpriority="high"><link rel="stylesheet" href="style.css">
 <script defer src="lib/sha256.js"></script><script defer src="data.js"></script><script defer src="engine.js"></script>
-<script defer src="views.js"></script><script defer src="app.js"></script>
+<script defer src="views.js"></script><script defer src="locale.js"></script><script defer src="app.js"></script>
 </head><body>
 <header class="top"><button class="brand" data-act="home" aria-label="PostBabel home"><i class="reel"></i>PostBabel<span>.</span></button>
-<nav id="views" aria-label="Console views"></nav><div class="system"><b class="statusdot"></b> Sample replay <button data-act="settings" class="settings">Settings</button></div></header>
+<nav id="views" aria-label="Console views"></nav><div class="system"><span class="replay-status"><b class="statusdot"></b> Sample data</span><button data-act="settings" class="settings">Settings</button><div class="language" role="group" aria-label="Display language"><button type="button" data-language="en" data-keep-language lang="en" aria-label="English" aria-pressed="true">EN</button><button type="button" data-language="zh" data-keep-language lang="zh-CN" aria-label="中文" aria-pressed="false">中文</button></div></div></header>
 <main class="shell"><section id="work" aria-live="off"></section><aside id="rail" aria-label="Claim tape"></aside></main>
 <footer><span>PostBabel <b>/</b> Protocol console</span><span>SAMPLE listings · SIMULATED registry · RECORDED CYCLE · DRY-RUN anchor · OPTIONAL live</span></footer>
 <dialog id="dialog"><div class="dialogbar"><span id="dialogTitle"></span><button class="quiet" data-act="close">Close ×</button></div><div id="dialogBody"></div></dialog>
