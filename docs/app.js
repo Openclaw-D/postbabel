@@ -9,11 +9,32 @@ const optionsKey='postbabel-optional-v1'; // keys are kept only for this tab ses
 function loadOptions(){try{return JSON.parse(sessionStorage.getItem('postbabel-optional-v1')||'{}');}catch{return {};}}
 function storeOptions(){sessionStorage.setItem(optionsKey,JSON.stringify(state.options));}
 let active=Promise.resolve(),cycleTimer=null,noticeTimer=null;
+const buyerVisibility=new IntersectionObserver(entries=>{
+ for(const entry of entries)entry.target.dataset.dock=entry.isIntersecting?'on':'off';
+},{rootMargin:'0px 0px -16% 0px'});
 function enqueue(fn){active=active.then(fn).catch(err=>{notice(err?.message||'Action failed');console.error('PostBabel action failed:',err?.name||'Error');});return active;}
 function notice(text){$('notice').textContent=text;PBLocale.apply($('notice'));$('notice').classList.add('visible');clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').classList.remove('visible'),3200);}
 function openDialog(title,html){$('dialogTitle').textContent=title;$('dialogBody').innerHTML=html;PBLocale.apply($('dialog'));if(!$('dialog').open)$('dialog').showModal();}
 function closeDialog(){if($('dialog').open)$('dialog').close();}
-async function copy(text){try{await navigator.clipboard.writeText(text);notice('Copied to clipboard');}catch{openDialog('Copy text','<textarea readonly aria-label="Text to copy">'+V.esc(text)+'</textarea>');$('dialogBody').querySelector('textarea').select();}}
+async function copy(text,button){
+ try{
+  await navigator.clipboard.writeText(text);
+ }catch{
+  openDialog('Copy text','<p>Use your device’s Copy command on the selected text.</p><textarea readonly aria-label="Text to copy">'+V.esc(text)+'</textarea>');
+  const field=$('dialogBody').querySelector('textarea');
+  field.focus();field.select();
+  return;
+ }
+ const message=button?.matches('.nextQuestion button')?'Bilingual question copied':'Copied to clipboard';
+ if(button?.matches('.nextQuestion button')){
+  button.querySelector('.copyLabel').textContent=message;
+  button.querySelector('.copyGlyph').hidden=true;
+  button.querySelector('.doneGlyph').hidden=false;
+  button.dataset.copied='true';
+  PBLocale.apply(button);
+ }
+ notice(message);
+}
 function render(){
  document.body.dataset.view=state.view;document.body.dataset.stage=String(state.stage);
  const story=state.view==='Tape'&&state.stage===0;
@@ -25,6 +46,11 @@ function render(){
  const draw={Tape:()=>state.stage?V.stage(state):PBStory.home(state),Audit:()=>V.audit(state),Network:()=>V.network(state),Evolve:()=>V.evolve(state),
   Selftest:()=>V.cap('Diagnostics','Protocol self-test.','Fixed synthetic records, independent expected digests, deterministic decisions and reversible integrity checks.')+'<div class="panel" id="selftests">'+state.tests.map(t=>'<div class="test"><span>'+V.esc(t.name)+'</span>'+V.tag(t.ok?'PASS':'FAIL',t.ok?'pass':'fail')+'</div>').join('')+'</div>'};
  $('work').innerHTML=draw[state.view]();$('rail').innerHTML=story?'':V.trace(state);
+ buyerVisibility.disconnect();
+ if(story){
+  buyerVisibility.observe($('sourcingFlow'));
+  for(const form of $('work').querySelectorAll('form[data-compare]'))syncPicks(form);
+ }
  for(const id of ['views','work','rail'])PBLocale.apply($(id));
  const step=$('work').querySelector('.stepbar button.current');
  if(step){
@@ -79,7 +105,7 @@ async function claimDetails(id){
  const c=state.tape.rows.find(x=>x.id===id);if(!c)return;
  const proof=state.tape.proofs.get(c.hash);
  const evidence=proof?{algorithm:'ECDSA P-256 / SHA-256',scope:'Locally generated sample actor identity',signature:E.hex(proof.signature),publicKey:await crypto.subtle.exportKey('jwk',proof.publicKey)}:null;
- openDialog(c.id+' / '+c.kind,'<span class="subcap">Canonical claim</span><pre>'+V.esc(JSON.stringify(c,null,2))+'</pre>'+(evidence?'<details><summary>Actor signature and public key</summary><pre>'+V.esc(JSON.stringify(evidence,null,2))+'</pre></details>':'<p class="note">SHA-256 fallback active. Signatures require Web Crypto.</p>'));
+ openDialog(c.id+' / '+c.kind,'<span class="subcap">SHA-256</span><code class="hex">'+V.esc(c.hash)+'</code><details><summary>Canonical claim</summary><pre>'+V.esc(JSON.stringify(c,null,2))+'</pre></details>'+(evidence?'<details><summary>Actor signature and public key</summary><pre>'+V.esc(JSON.stringify(evidence,null,2))+'</pre></details>':'<p class="note">SHA-256 fallback active. Signatures require Web Crypto.</p>'));
 }
 async function dispute(){
  requireClean();if(state.tape.rows.some(c=>c.id==='PB-D-01'))return claimDetails('PB-D-01');
@@ -145,16 +171,21 @@ function comparisonMode(value){
 function updateFlow(mode,focus){
  const slot=$(mode+'Flow');
  if(!slot)return;
+ const wasReadingEvidence=slot.querySelector('.evidenceDetail')?.open;
  slot.innerHTML=PBStory.flow(mode,state);
+ const form=slot.querySelector('form');
+ if(form)syncPicks(form);
  PBLocale.apply(slot);
  if(focus==='offer'){
+  const evidence=slot.querySelector('.evidenceDetail');
+  if(evidence&&wasReadingEvidence)evidence.open=true;
   const current=slot.querySelector('[data-act="pickOffer"][aria-pressed="true"]');
   if(current)current.focus({preventScroll:true});
   return;
  }
- const target=focus==='result'?slot.querySelector('.comparisonResult'):slot.querySelector('input[name="criteria"]');
+ const target=focus==='result'?slot.querySelector('.comparisonResult'):slot.querySelector('input');
  if(target)target.focus({preventScroll:true});
- slot.scrollIntoView({block:'start',behavior:'instant'});
+ slot.scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 }
 function syncPicks(form){
  const mode=form.dataset.compare;
@@ -162,6 +193,10 @@ function syncPicks(form){
  const valid=new Set(PBCompare.axes(mode).map(axis=>axis.id));
  const picked=[...form.querySelectorAll('input[name="criteria"]:checked')].map(el=>el.value).filter(id=>valid.has(id));
  state.comparisons[mode].picked=picked;
+ for(const preset of form.querySelectorAll('[name=orderPreset]')){
+  const required=preset.value.split(' ');
+  preset.checked=required.length===picked.length&&required.every(id=>picked.includes(id));
+ }
  const submit=form.querySelector('[type="submit"]');
  if(submit)submit.disabled=!picked.length;
  return picked;
@@ -207,28 +242,46 @@ function sourceExcerpt(text,span){
  if(!span)return V.esc(text);
  return V.esc(text.slice(0,span.start))+'<mark>'+V.esc(text.slice(span.start,span.end))+'</mark>'+V.esc(text.slice(span.end));
 }
+function passages(english,chinese,englishDisclosure='Show original Chinese',chineseDisclosure='Show English translation'){
+ // Both readings follow the switch even in an open dialog. Verbatim evidence is kept intact.
+ const words=(lang,html,visibleIn)=>'<blockquote class="only-'+visibleIn+'" data-keep-language lang="'+lang+'">'+html+'</blockquote>';
+ return words('en',english,'en')+words('zh-CN',chinese,'zh')+
+  '<details><summary><span class="only-en">'+V.esc(englishDisclosure)+'</span><span class="only-zh">'+V.esc(chineseDisclosure)+'</span></summary>'+
+  words('zh-CN',chinese,'en')+words('en',english,'zh')+'</details>';
+}
 function sourceDialog(id){
  const offer=state.brief.offers.find(o=>o.id===id);
  if(!offer)return;
  const reviewed=state.comparisons.sourcing.submitted;
  const span=reviewed?E.assessQuote(offer,state.brief).span:null;
  const extra=offer.logistics;
- openDialog('Supplier '+id,'<div class="evidenceDialog"><h3>Original quote</h3><blockquote lang="zh-CN" data-keep-language>'+sourceExcerpt(offer.source,span)+'</blockquote>'+
-  '<p class="englishGloss" lang="en" data-keep-language>'+V.esc(offer.translation)+'</p>'+
-  (extra?'<h3>Delivery terms</h3><blockquote lang="zh-CN" data-keep-language>'+V.esc(extra.source)+'</blockquote><p class="englishGloss" lang="en" data-keep-language>'+V.esc(extra.translation)+'</p>':'')+
+ openDialog('Supplier '+id,'<div class="evidenceDialog"><h3><span class="only-en">Quote in English</span><span class="only-zh">Original quote</span></h3>'+passages(V.esc(offer.translation),sourceExcerpt(offer.source,span))+
+  (extra?'<h3>Delivery terms</h3>'+passages(V.esc(extra.translation),V.esc(extra.source)):'')+
   (offer.briefDocument==='invoice'?'<p class="note">The purchase brief includes an invoice. Supply authorisation is still pending.</p>':'')+
   (reviewed?'<div class="controls">'+V.btn('claim','View signed record','mini',offer.ref)+'</div>':'')+'</div>');
 }
 function listingDialog(id){
  const row=D.offers.find(o=>o.key===id);
  if(!row)return;
- openDialog(row.name,'<div class="evidenceDialog"><h3>Original listing</h3><blockquote class="source" data-keep-language>'+V.esc(row.source)+'</blockquote>'+
+ const reading=D.listingText(row.source);
+ const originalIsChinese=E.parse(row.source).language==='zh';
+ const body=reading?passages(V.esc(reading.en),V.esc(reading.zh),originalIsChinese?'Show original Chinese':'Show Chinese translation',originalIsChinese?'Show English translation':'Show original English'):
+  '<details><summary>Show original listing text</summary><blockquote class="source" data-keep-language>'+V.esc(row.source)+'</blockquote></details>';
+ openDialog(row.name,'<div class="evidenceDialog"><h3>Listing text</h3>'+body+
   (state.comparisons.collector.submitted?'<div class="controls">'+V.btn('inspectOffer','Open detailed checks','mini',id)+'</div>':'')+'</div>');
 }
+function supplierQuestion(id){
+ const offer=state.brief.offers.find(o=>o.id===id);
+ if(!offer)return;
+ const {picked,submitted}=state.comparisons.sourcing;
+ const row=submitted&&PBCompare.rank('sourcing',picked,state.brief).find(s=>s.id===id);
+ const finding=row&&row.states.find(s=>picked.includes(s.id)&&s.status!=='met');
+ return PBStory.question(offer,state.brief,finding);
+}
 function followUp(id){
- const row=state.brief.offers.find(o=>o.id===id);
+ const row=supplierQuestion(id);
  if(!row)return;
- openDialog('Question for the supplier','<div class="evidenceDialog"><p data-keep-language lang="zh-CN">'+V.esc(row.zh)+'</p><p data-keep-language lang="en">'+V.esc(row.en)+'</p><div class="controls">'+V.btn('copySupplier','Copy both languages','mini',id)+'</div></div>');
+ openDialog('Question for the supplier','<div class="evidenceDialog">'+passages(V.esc(row.en),V.esc(row.zh),'Show Chinese draft','Show English draft')+'<div class="controls">'+V.btn('copySupplier','Copy both languages','mini',id)+'</div></div>');
 }
 let callCache;
 async function callNotes(id){
@@ -246,9 +299,9 @@ async function callNotes(id){
  const stamp=Math.floor(row.atSeconds/60)+':'+String(row.atSeconds%60).padStart(2,'0');
  // Both recorded questions stay in the DOM so a language switch works with the dialog open.
  const question=['en','zh'].map(lang=>'<p class="only-'+lang+'" data-keep-language lang="'+lang+'">'+V.esc(row.cards[lang].question)+'</p>').join('');
- openDialog('Call follow-up','<div class="evidenceDialog"><p class="note">Sample call · Duixi Core</p><h3>What the supplier said</h3><blockquote data-keep-language lang="zh-CN"><small>'+V.esc(stamp)+'</small> '+V.esc(row.quote)+'</blockquote><p class="englishGloss" lang="en" data-keep-language>'+V.esc(row.gloss)+'</p><h3>A question to ask next</h3>'+question+'</div>');
+ openDialog('Call follow-up','<div class="evidenceDialog"><p class="note"><span>Sample call · Duixi Core</span> · '+V.esc(stamp)+'</p><h3>What the supplier said</h3>'+passages(V.esc(row.gloss),V.esc(row.quote))+'<h3>A question to ask next</h3>'+question+'</div>');
 }
-async function act(a,v,mode){
+async function act(a,v,mode,button){
  switch(a){
  case 'close':return closeDialog();
  case 'home':state.view='Tape';state.stage=0;render();window.scrollTo({top:0,behavior:'instant'});return;
@@ -258,7 +311,7 @@ async function act(a,v,mode){
  case 'listingSource':return listingDialog(v);
  case 'followUp':return followUp(v);
  case 'callNotes':return callNotes(v);
- case 'copySupplier':{const o=state.brief.offers.find(x=>x.id===(v||state.supplier));return o&&copy(o.en+'\n'+o.zh);}
+ case 'copySupplier':{const q=supplierQuestion(v||state.supplier);return q&&copy(q.en+'\n'+q.zh,button);}
  case 'begin':closeDialog();await go(1);window.scrollTo({top:0,behavior:'instant'});return;
  case 'stage':return go(Number(v));
  case 'view':state.view=v;return render();
@@ -267,7 +320,8 @@ async function act(a,v,mode){
  case 'inspectOffer':closeDialog();state.inspect=v;await go(4);window.scrollTo({top:0,behavior:'instant'});return;
  case 'sample':await reset(v,null,state.allFail);return go(1);
  case 'useText':{const raw=$('sourceText').value.trim();if(!raw)throw Error('Paste a listing first.');if(raw!==V.source(state)){const known=D.offers.find(o=>o.source===raw);await reset(known?.key||'resale-a',known?null:E.customOffer(raw),state.allFail);}return go(2);}
- case 'glossary':return openDialog('Collector glossary',D.glossary.map(([zh,en,n])=>'<div class="gloss"><b>'+V.esc(zh)+' / '+V.esc(en)+'</b><p>'+V.esc(n)+'</p></div>').join(''));
+ case 'glossary':return openDialog('Collector glossary',D.glossary.map(([zh,en,n])=>'<div class="gloss"><b class="only-en">'+V.esc(en)+'</b><b class="only-zh" lang="zh-CN" data-keep-language>'+V.esc(zh)+'</b><p>'+V.esc(n)+'</p></div>').join('')+
+  '<details><summary>Show bilingual glossary</summary>'+D.glossary.map(([zh,en])=>'<p data-keep-language><span lang="zh-CN">'+V.esc(zh)+'</span> · <span lang="en">'+V.esc(en)+'</span></p>').join('')+'</details>');
  case 'scenario':await reset(state.primary,state.custom,!state.allFail);return go(5);
  case 'verify':state.integrity=await state.tape.check();return render();
  case 'tamper':state.tape.tamper();state.tampered=true;state.integrity=await state.tape.check();return render();
@@ -284,9 +338,19 @@ async function act(a,v,mode){
  case 'anchorLive':return anchorReview();case 'confirmAnchor':return broadcast();
  }
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)enqueue(()=>act(b.dataset.act,b.dataset.value,b.dataset.mode));});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)enqueue(()=>act(b.dataset.act,b.dataset.value,b.dataset.mode,b));});
 document.addEventListener('submit',e=>{const form=e.target;if(!form.matches('form[data-compare]'))return;e.preventDefault();enqueue(()=>compare(form.dataset.compare,form));});
-document.addEventListener('change',e=>{const form=e.target.closest('form[data-compare]');if(form&&e.target.name==='criteria'){syncPicks(form);return;}if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;render();}});
+document.addEventListener('change',e=>{
+ const form=e.target.closest('form[data-compare]');
+ if(form){
+  if(e.target.name==='orderPreset'){
+   const required=e.target.value.split(' ');
+   for(const input of form.querySelectorAll('[name=criteria]'))input.checked=required.includes(input.value);
+  }
+  syncPicks(form);return;
+ }
+ if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;render();}
+});
 active=(async()=>{
  await PBLocale.ready;
  const diagnostics=new URLSearchParams(location.search).get('selftest')==='1';
@@ -296,7 +360,7 @@ active=(async()=>{
  if(diagnostics){
   await new Promise((yes,no)=>{const script=document.createElement('script');script.src='selftest.js';script.onload=yes;script.onerror=no;document.head.append(script);});
   state.tests=await pbSelftest();state.view='Selftest';render();
- }else if(location.hash==='#sourcing'||location.hash==='#collector'){
+ }else if(['#sourcing','#sourcingFlow','#collector'].includes(location.hash)){
   document.getElementById(location.hash.slice(1))?.scrollIntoView();
  }
 })().catch(e=>{$('work').textContent='Unable to open PostBabel: '+e.message;});

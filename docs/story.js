@@ -10,6 +10,16 @@
     missing: 'Unknown',
     miss: 'Misses requirement'
   };
+  const glyphs = {
+    tag: '<path d="M3 4h8l10 10-7 7L3 10z"/><circle cx="7.5" cy="7.5" r="1"/>',
+    box: '<path d="m12 3 9 5-9 5-9-5zm-9 5v9l9 5 9-5V8m-9 5v9M7.5 5.5l9 5"/>',
+    message: '<path d="M20 16a3 3 0 0 1-3 3H9l-5 3V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z"/><path d="M8 9h8m-8 4h5"/>',
+    copy: '<rect x="8" y="8" width="12" height="13" rx="2"/><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>',
+    check: '<path d="m4 12 5 5L20 6"/>'
+  };
+  function icon(name) {
+    return `<svg class="uiIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${glyphs[name]}</svg>`;
+  }
 
   function action(name, value, label) {
     return `<button class="storyLink" type="button" data-act="${esc(name)}" data-value="${esc(value)}">${esc(label)}</button>`;
@@ -20,7 +30,7 @@
       <div class="storyHeroCopy">
         <h1 id="storyTitle"><span>${esc(brief.quantity)} LABUBUs.</span> <br><span>Who can deliver?</span></h1>
         <p>Your budget is ${esc(usd(brief.unitBudget))} per LABUBU figure. Three suppliers reply in Chinese. Check which terms each one puts in writing.</p>
-        <a class="storyPrimary" href="#sourcing">Compare quotes for ${esc(brief.quantity)} units</a>
+        <a class="storyPrimary" href="#sourcingFlow">Compare quotes for ${esc(brief.quantity)} units</a>
       </div>
       <figure class="towerArt">
         <picture><img src="assets/babel-hero.webp"
@@ -74,16 +84,37 @@
     </div>`;
   }
 
+  const orderTerms = ['budget', 'dispatch', 'freight'];
+
   function form(mode, axes, picked) {
+    const sourcing = mode === 'sourcing';
     const choices = axes.map(axis => `<label class="criterion">
       <input type="checkbox" name="criteria" value="${esc(axis.id)}"${picked.includes(axis.id) ? ' checked' : ''}>
       <span>${esc(axis.label)}</span></label>`).join('');
-    const submit = mode === 'sourcing' ? 'Compare supplier quotes' : 'Compare collector listings';
+    const grid = `<div class="criteriaGrid">${choices}</div>`;
+    const terms = axes.filter(axis => orderTerms.includes(axis.id)).map(axis => `<span>${esc(axis.label)}</span>`).join('<i aria-hidden="true"> · </i>');
+    const stockTerms = [...orderTerms, 'stock'];
+    const option = (required, title, detail, kind) => {
+      const matches = picked.length === required.length && required.every(id => picked.includes(id));
+      return `<label class="criterion orderPreset" data-option="${kind}"><input type="radio" name="orderPreset" value="${required.join(' ')}"${matches ? ' checked' : ''}>
+        <span class="choiceIcon">${icon(kind === 'stock' ? 'box' : 'tag')}</span>
+        <span class="choiceCopy"><strong>${esc(title)}</strong><small>${detail}</small></span></label>`;
+    };
+    const common = orderTerms.every(id => picked.includes(id));
+    const custom = picked.length && !(common && (picked.length === 3 || (picked.length === 4 && picked.includes('stock'))));
+    const controls = sourcing ? `<div class="orderChoices">
+      ${option(orderTerms, 'Price and delivery', terms, 'delivery')}
+      ${option(stockTerms, 'Also confirm stock', 'Add proof of stock for the full order.', 'stock')}
+      </div>
+      <details${custom ? ' open' : ''}><summary>Choose individual terms</summary>${grid}</details>` : grid;
+    const submit = sourcing ? 'Compare supplier quotes' : 'Compare collector listings';
     return `<form class="criteriaForm" data-compare="${mode}" aria-labelledby="${mode}Criteria" tabindex="-1">
-      <fieldset><legend id="${mode}Criteria">Which requirements matter to you?</legend>
-        <div class="criteriaGrid">${choices}</div>
+      <fieldset><legend id="${mode}Criteria">${sourcing ? 'What do you want to check?' : 'Which requirements matter to you?'}</legend>
+        ${controls}
       </fieldset>
+      ${sourcing ? '<div class="buyerActionSlot"><div class="buyerDock">' : ''}
       <button class="storyPrimary" type="submit"${picked.length ? '' : ' disabled'}>${submit}</button>
+      ${sourcing ? '</div></div>' : ''}
     </form>`;
   }
 
@@ -164,28 +195,56 @@
     </div>`;
   }
 
-  function result(mode, axes, picked, rows, active) {
+  function question(offer, brief, finding) {
+    const count = brief.quantity;
+    const limit = usd(brief.unitBudget);
+    const questions = {
+      budget: [`Can you quote ${limit} per unit or less for ${count} figures?`, `采购 ${count} 只时，单价可以降到 ${limit} 以内吗？`],
+      edition: ['Could you show the batch labels confirming that every figure is the same edition?', '请提供批次标签，确认所有公仔都是同一版次。'],
+      stock: [`Can you show a dated stock record for all ${count} figures?`, `请提供带日期的库存凭证，确认 ${count} 只公仔都有现货。`],
+      supply: ['Could you share the document authorising you to supply these figures?', '请提供授权贵方供应这批公仔的凭证。'],
+      dispatch: ['Can you commit in writing to dispatch within seven days of payment?', '请书面确认可以在付款后七天内发货吗？'],
+      freight: ['Can you send a revised quote that includes freight?', '请提供一份包含运费的更新报价。']
+    };
+    const pair = questions[finding?.id];
+    return pair ? {en: pair[0], zh: pair[1]} : {en: offer.en, zh: offer.zh};
+  }
+
+  function result(mode, axes, picked, rows, active, brief) {
     const fullMatches = rows.filter(row => row.matched === picked.length);
-    let headline = 'No offer meets every selected requirement.';
-    if (fullMatches.length === 1) headline = 'Only ' + fullMatches[0].name + ' meets every selected requirement as written.';
-    if (fullMatches.length > 1) headline = fullMatches.length + ' offers meet every selected requirement.';
+    const count = picked.length;
+    const terms = count === 1 ? 'the selected term' : 'all ' + count + ' terms';
+    let headline = 'No offer meets ' + terms + '.';
+    if (fullMatches.length === 1) headline = 'Only ' + fullMatches[0].name + ' meets ' + terms + '.';
+    if (fullMatches.length > 1) headline = fullMatches.length + ' offers meet ' + terms + '.';
     const tabs = rows.map(row => `<button type="button" data-act="pickOffer" data-mode="${mode}"
       data-value="${esc(row.id)}" aria-pressed="${row.id === active.id}"><span>${esc(row.name)}</span>
-      <small>${esc(row.matched)}/${picked.length}</small></button>`).join('');
-    const sourceActions = mode === 'sourcing' ? [
-      action('quoteSource', active.id, 'Read original quote'),
-      action('callNotes', active.id, 'Review call notes'),
-      action('followUp', active.id, 'Draft a follow-up')
-    ].join(' ') : action('listingSource', active.id, 'Read original listing');
-    const price = esc(usd(active.price)) + (mode === 'sourcing' ? ' per unit' : '');
+      <small>${esc(usd(row.price))} · ${row.matched}/${picked.length}</small></button>`).join('');
+    const supplier = mode === 'sourcing' ? brief.offers.find(offer => offer.id === active.id) : null;
+    const finding = active.states.find(item => picked.includes(item.id) && item.status !== 'met');
+    const gap = finding?.note || (supplier ? root.PB.assessQuote(supplier, brief).gap : '');
+    const draft = supplier && question(supplier, brief, finding);
+    const matchesOrder = supplier && active.matched === count && orderTerms.every(id => picked.includes(id));
+    const summary = matchesOrder
+      ? `<span>${esc(usd(active.price))} per unit, freight included.</span> <span>${esc(active.states.find(s => s.id === 'dispatch').note)}</span>`
+      : `<span>${esc(active.name)}</span> · <span>${active.matched} of ${count} selected requirements met</span>`;
+    const next = supplier ? `<div class="nextQuestion">
+      <h4 class="questionTitle">${icon('message')} <span>Ask the supplier</span></h4>
+      <p class="only-en" data-keep-language lang="en">${esc(draft.en)}</p>
+      <p class="only-zh" data-keep-language lang="zh-CN">${esc(draft.zh)}</p>
+      <div class="buyerActionSlot"><div class="buyerDock"><button type="button" class="storyPrimary" data-act="copySupplier" data-value="${esc(active.id)}"><span class="copyGlyph">${icon('copy')}</span><span class="doneGlyph" hidden>${icon('check')}</span><span class="copyLabel">Copy bilingual question</span></button></div></div>
+      </div>` : '';
+    const source = supplier ? action('quoteSource', active.id, 'Read original quote') : action('listingSource', active.id, 'Read original listing');
     return `<section class="comparisonResult" tabindex="-1" aria-labelledby="${mode}ResultTitle">
       <h3 id="${mode}ResultTitle">${esc(headline)}</h3>
-      ${action('editCriteria', mode, 'Edit requirements')}
       <div class="offerTabs" role="group" aria-label="Choose an offer">${tabs}</div>
-      <h4><span>${esc(active.name)}</span> · <span>${price}</span></h4>
-      <p><strong>${esc(active.matched)} of ${picked.length} selected requirements met</strong></p>
-      <div class="resultGrid">${evidence(axes, picked, active)}${chart(mode, axes, picked, active)}</div>
-      <div class="controls">${sourceActions}</div>
+      <p class="resultSummary"><strong>${summary}</strong>${gap ? ' <span>' + esc(gap) + '</span>' : ''}</p>
+      ${next}
+      <div class="controls">${source} ${action('editCriteria', mode, 'Edit requirements')}</div>
+      <details class="evidenceDetail"><summary>Evidence and six-axis chart</summary>
+        <div class="resultGrid">${evidence(axes, picked, active)}${chart(mode, axes, picked, active)}</div>
+        ${supplier ? action('callNotes', active.id, 'Review call notes') + ' ' + action('followUp', active.id, 'Preview both languages') : ''}
+      </details>
     </section>`;
   }
 
@@ -195,10 +254,11 @@
     const axes = root.PBCompare.axes(mode);
     const picked = axes.map(axis => axis.id).filter(id => comparison?.picked?.includes(id));
     if (!comparison?.submitted || !picked.length) return form(mode, axes, picked);
-    const rows = root.PBCompare.rank(mode, picked, state.brief || root.PBData.brief);
+    const brief = state.brief || root.PBData.brief;
+    const rows = root.PBCompare.rank(mode, picked, brief);
     if (!rows.length) return form(mode, axes, picked);
     const active = rows.find(row => row.id === comparison.activeId) || rows[0];
-    return result(mode, axes, picked, rows, active);
+    return result(mode, axes, picked, rows, active, brief);
   }
 
   function home(state) {
@@ -212,12 +272,24 @@
         <h2 id="collectorTitle">One figure, four listings</h2>
         <p>Ava has $220 for a Green Grape. These sample listings differ on edition, delivery and who is selling.</p>
         ${collectorTable()}
-        <div id="collectorFlow">${flow('collector', state)}</div>
-        ${action('begin', '', 'Explore the verification workspace')}
+        <details${state.comparisons?.collector?.picked?.length ? ' open' : ''}><summary>Compare these listings</summary>
+          <div id="collectorFlow">${flow('collector', state)}</div>
+        </details>
       </section>`;
   }
 
   const chinese = {
+    'What do you want to check?': '你想确认什么？',
+    'Price and delivery': '价格和交付',
+    'Also confirm stock': '同时核实现货',
+    'Add proof of stock for the full order.': '再要求提供整批现货的凭证。',
+    'Choose individual terms': '逐项选择采购条件',
+    'Ask the supplier': '向供应商追问',
+    'Copy bilingual question': '复制中英双语追问',
+    'Bilingual question copied': '已复制中英双语追问',
+    'Evidence and six-axis chart': '查看依据与六维图',
+    'Preview both languages': '预览中英双语追问',
+    'Compare these listings': '按条件比较这四个渠道',
     'Who can deliver?': '谁能按约交货？',
     'Bruegel’s Tower of Babel rises above a crowded harbor.': '勃鲁盖尔笔下的巴别塔耸立在繁忙的港口旁。',
     'The Tower of Babel · Pieter Bruegel the Elder, 1563': '《巴别塔》· 老彼得·勃鲁盖尔，1563 年',
@@ -251,6 +323,13 @@
     'Read original listing': '查看商品原文', 'Explore the verification workspace': '进入核验工作区'
   };
   const patterns = [
+    [/^Only (.+) meets all (\d+) terms\.$/, (name, n) => '只有' + zh(name) + ' 符合全部 ' + n + ' 项条件。'],
+    [/^Only (.+) meets the selected term\.$/, name => '只有' + zh(name) + ' 符合所选条件。'],
+    [/^No offer meets all (\d+) terms\.$/, n => '没有报价符合全部 ' + n + ' 项条件。'],
+    [/^No offer meets the selected term\.$/, () => '没有报价符合所选条件。'],
+    [/^(\d+) offers meet all (\d+) terms\.$/, (total, n) => '有 ' + total + ' 份报价符合全部 ' + n + ' 项条件。'],
+    [/^(\d+) offers meet the selected term\.$/, total => '有 ' + total + ' 份报价符合所选条件。'],
+    [/^(\$[\d.,]+) per unit, freight included\.$/, price => '每只 ' + price + '，已含运费。'],
     [/^(\d+) LABUBUs\.$/, n => n + ' 只 LABUBU，'],
     [/^Only (.+) meets every selected requirement as written\.$/, name => '只有「' + zh(name) + '」的书面报价符合全部所选条件。'],
     [/^(\d+) offers meet every selected requirement\.$/, n => '有 ' + n + ' 份报价符合全部所选条件。'],
@@ -274,5 +353,5 @@
     return text;
   }
 
-  root.PBStory = { home, flow, zh };
+  root.PBStory = { home, flow, question, zh };
 })(globalThis);

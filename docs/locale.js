@@ -69,14 +69,20 @@
     current=lang;
     document.documentElement.lang=lang==='zh'?'zh-CN':'en';
     document.title=lang==='zh'?'PostBabel · 报价比较':'PostBabel · Compare offers';
-    buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.language===lang)));
+    buttons.forEach(b=>{
+      b.setAttribute('aria-pressed',String(b.dataset.language===lang));
+      const chinese=b.dataset.language==='zh';
+      const label=lang==='zh'?(chinese?'中文':'英语'):(chinese?'Chinese':'English');
+      b.setAttribute('aria-label',label);
+      b.title=label;
+    });
     apply(document.body,true);
     if(remember){
       try{localStorage.setItem(setting,lang);}catch{}
       try{const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(history.state,'',url);}catch{}
     }
   }
-  function failed(){const notice=document.getElementById('notice');notice.textContent='中文语言包暂时无法加载，请重试。';notice.classList.add('visible');setTimeout(()=>notice.classList.remove('visible'),3500);}
+  function failed(){const notice=document.getElementById('notice');notice.textContent=current==='en'?'Chinese could not load. Please try again.':'中文语言包暂时无法加载，请重试。';notice.classList.add('visible');setTimeout(()=>notice.classList.remove('visible'),3500);}
   for(const b of buttons)b.addEventListener('click',()=>select(b.dataset.language,true).catch(failed));
   const ready=select(preferred(),false).catch(failed);
   root.PBLocale={apply,ready,text:translate};

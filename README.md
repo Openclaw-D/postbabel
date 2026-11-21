@@ -1,8 +1,8 @@
 # PostBabel
 
-A buyer needs 100 LABUBU figures. Compare three Chinese supplier quotes, see which written terms meet the order, and ask for the missing evidence in either language.
+A buyer needs 100 LABUBUs. Compare three supplier quotes and copy a question about the evidence still missing.
 
-1. [Watch the 60-second demo clip](https://openclaw-d.github.io/postbabel/media/postbabel-60s.mp4)
-2. [Open the working prototype](https://openclaw-d.github.io/postbabel/?lang=en)
-3. [Read the three-page pitch deck (PDF)](https://openclaw-d.github.io/postbabel/media/postbabel-pitch.pdf)
+1. Open the live site in [English](https://openclaw-d.github.io/postbabel/?lang=en) or [中文](https://openclaw-d.github.io/postbabel/?lang=zh).
+2. [Watch the 60-second walkthrough](https://openclaw-d.github.io/postbabel/media/postbabel-60s.mp4)
+3. [Read the three-page pitch](PostBabel-Pitch.pdf)
 4. [Read the build notes](BUILD-NOTES.md)

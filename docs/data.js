@@ -6,6 +6,18 @@
     {key:'official',id:'PB-L-03',name:'Official channel',channel:'Official',price:180,days:42,code:'DEMO-0321',stamp:'DEMO-R2',seller:'Official channel (simulated)',identity:'Official sample',photo:'Disclosed restock',ship:0,duty:0,source:'LABUBU Green Grape, Exciting Macaron series. Later restock preorder. Sealed. Stamp DEMO-R2, code DEMO-0321. USD 180 delivered, tax included. Preorder: dispatch and delivery in six weeks.'},
     {key:'amazon',id:'PB-L-04',name:'Amazon third party',channel:'Marketplace',price:240,days:2,code:'DEMO-0399',stamp:'MC23-01',seller:'Orbit Cart',identity:'Unverified',photo:'Listing photo only',ship:8,duty:null,source:'LABUBU Green Grape, THE MONSTERS Exciting Macaron, confirmed figure. Third-party listing. Code DEMO-0399, stamp MC23-01. USD 240, shipping USD 8, duties extra. Estimated arrival: 2 days.'}
   ];
+  const sampleReadings = {
+    'resale-a': {en: 'POP MART LABUBU, THE MONSTERS Exciting Macaron, Green Grape. Listed as a confirmed first-edition figure. Outer box opened, inner bag sealed. Batch DEMO-R2, scratch code DEMO-0308. The seller claims official authorisation. $220 including shipping, duties extra. Estimated arrival in three days.'},
+    'resale-b': {en: 'LABUBU Green Grape from THE MONSTERS Exciting Macaron. Listed as a confirmed first-edition figure. Outer box opened, inner bag sealed. Batch MC23-01, scratch code DEMO-0317. $260 including shipping and tax. Delivery in three days.'},
+    official: {zh: 'LABUBU 心动马卡龙系列绿葡萄，后续补货批次预售，未拆封。钢印 DEMO-R2，核验码 DEMO-0321。含税到手价 180 美元，预计六周内发货并送达。'},
+    amazon: {zh: 'LABUBU 心动马卡龙系列绿葡萄，确认款。第三方卖家，核验码 DEMO-0399，钢印 MC23-01。标价 240 美元，运费 8 美元，关税另计，预计两天送达。'}
+  };
+  // A translation belongs to these exact words, including when the catalogue is refreshed.
+  const readings = new Map(offers.map(offer => {
+    const translation = sampleReadings[offer.key];
+    return [offer.source, {en: translation.en || offer.source, zh: translation.zh || offer.source}];
+  }));
+  const listingText = source => readings.get(source);
   const registry={'DEMO-0308':'used','DEMO-0317':'unused','DEMO-0321':'unused'};
   const glossary=[
     ['端盒','full case','Multiple boxes from one case.'],['确认款','opened to confirm the character','The character is known. The outer box may have been opened.'],
@@ -99,6 +111,6 @@
     }
   ]
 };
-  const data={brief,product:{name:"LABUBU · Green Grape",series:"THE MONSTERS · Exciting Macaron",officialUrl:"https://www.popmart.com/us/products/675/THE-MONSTERS---Exciting-Macaron-Vinyl-Face-Blind-Box"},offers,registry,glossary,questions,categories,versions,matrix};
+  const data={brief,product:{name:"LABUBU · Green Grape",series:"THE MONSTERS · Exciting Macaron",officialUrl:"https://www.popmart.com/us/products/675/THE-MONSTERS---Exciting-Macaron-Vinyl-Face-Blind-Box"},offers,listingText,registry,glossary,questions,categories,versions,matrix};
   root.PBData=data;if(typeof module!=='undefined')module.exports=data;
 })(globalThis);

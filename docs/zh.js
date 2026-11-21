@@ -1,6 +1,21 @@
 (function(root){
   "use strict";
   const messages = {
+  "Only the original text is available for this listing.": "这条商品信息目前只有原文。",
+  "View or edit original Chinese": "查看或编辑中文原文",
+  "View or edit original English": "查看或编辑英文原文",
+  "No glossary terms matched this listing.": "这条商品信息没有出现术语表中的词。",
+  "Use your device’s Copy command on the selected text.": "文字已选中，请使用设备的复制功能。",
+  "Show original Chinese": "查看中文原文",
+  "Show English translation": "查看英文译文",
+  "Show Chinese translation": "查看中文译文",
+  "Show original English": "查看英文原文",
+  "Quote in English": "英文报价",
+  "Show original listing text": "查看商品原文",
+  "Listing text": "商品描述",
+  "Show Chinese draft": "查看中文追问",
+  "Show English draft": "查看英文追问",
+  "Show bilingual glossary": "查看中英双语术语表",
   "Choose your requirements to compare each offer with its written terms.": "选好条件，就能对照每份报价写明的条款。",
   "The purchase brief includes an invoice. Supply authorisation is still pending.": "采购简报附有发票，供货授权仍待核实。",
   "Enable testnet access in integration settings.": "在集成设置中开启测试网连接。",
