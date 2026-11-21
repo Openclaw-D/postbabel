@@ -4,9 +4,32 @@
   const fallback=root.pbSHA256||(typeof require!=='undefined'&&require('./lib/sha256.js'));
   const zero='0'.repeat(64);
   function canonical(value){
-    if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
-    if(value!==null&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
+    if(value===undefined)return 'null';
+    if(Array.isArray(value))return '['+value.map(v=>v===undefined?'null':canonical(v)).join(',')+']';
+    if(value!==null&&typeof value==='object')return '{'+Object.keys(value).filter(k=>value[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
     return JSON.stringify(value);
+  }
+  const cnDigits={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+  function cnNumber(text){
+    if(!text)return null;
+    if(/^\d+$/.test(text))return Number(text);
+    const tens=text.match(/^([一二两三四五六七八九])?十([一二三四五六七八九])?$/);
+    if(tens)return (tens[1]?cnDigits[tens[1]]:1)*10+(tens[2]?cnDigits[tens[2]]:0);
+    const digits=text.split('').map(ch=>cnDigits[ch]);
+    return digits.some(n=>n===undefined)?null:Number(digits.join(''));
+  }
+  function etaDays(value){
+    if(!value)return null;
+    const text=String(value);
+    if(/^six weeks$/i.test(text))return 42;
+    const cn=text.match(/^([一二两三四五六七八九十]+)\s*(天|日|周|星期|个?月)/);
+    if(cn){const n=cnNumber(cn[1]);if(!n)return null;return /周|星期/.test(cn[2])?n*7:/月/.test(cn[2])?n*30:n;}
+    const m=text.match(/(\d+)\s*(天|日|days?|周|星期|weeks?|个?月)?/i);
+    if(!m)return null;
+    const n=Number(m[1]),unit=m[2]||'days';
+    if(/周|星期|weeks?/.test(unit))return n*7;
+    if(/月/.test(unit))return n*30;
+    return n;
   }
   function hex(bytes){return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,'0')).join('');}
   async function hash(text){
@@ -29,7 +52,11 @@
     add(body){
       const put=async()=>{
         const existing=this.rows.find(r=>r.id===body.id);
-        if(existing)return existing;
+        if(existing){
+          const same=Object.keys(body).every(k=>canonical(body[k])===canonical(existing[k]));
+          if(!same)throw Error('Duplicate claim id '+body.id+' with different content.');
+          return existing;
+        }
         const claim=await seal(Object.assign({v:1,ts:this.epoch+this.rows.length,lang:'en',span:null,confidence:null,severity:'info'},body),this.rows.at(-1)?.hash||zero);
         if(root.crypto?.subtle){
           const params={name:'ECDSA',namedCurve:'P-256'},id=claim.actor.id;
@@ -75,7 +102,7 @@
       seal:find(/(拆盒未拆袋|未拆封|散货|sealed|loose)/i),batch:find(/(?:批次(?:钢印)?|stamp|batch)\s*[:：]?\s*([A-Z]{2,5}[\w-]*\d[\w-]*)/i),
       code:find(/(?:刮刮码|防伪码|code)\s*[:：]?\s*([A-Z]{2,5}-\d+)/i),price:num(find(/(?:USD\s*|\$)(\d+(?:\.\d+)?)/i)),
       shipping:/包邮|shipping included|delivered/i.test(text)?'included':find(/shipping\s+(USD\s*\d+)/i),duty:/含税|tax included/i.test(text)?'included':/关税另计|duties extra/i.test(text)?'extra':null,
-      eta:find(/(\d+\s*(?:天|days?)|six weeks|月底|大概)/i),terms:words};
+      eta:find(/((?:\d+|[一二两三四五六七八九十]+)\s*(?:天|日|周|星期|个?月|days?)|six weeks|月底|大概|尽快)/i),terms:words};
   }
   function evaluate(offer,allFail=false){
     const code=allFail?'not found':data.registry[offer.code]||'not found';
@@ -120,8 +147,8 @@
       eligible:missing.length===0&&perUnitDelta<=0,commitment:/没问题|能安排/.test(source)?'acknowledgement only':'review source'};
   }
   function customOffer(text){
-    const p=parse(text),days=p.eta?.match(/\d+/);
-    return {key:'custom',id:'PB-L-05',name:'Your listing',channel:'Pasted text',price:p.price,days:days?Number(days[0]):p.eta==='six weeks'?42:null,
+    const p=parse(text),days=etaDays(p.eta),soft=/月底|大概|尽快|差不多/.test(text);
+    return {key:'custom',id:'PB-L-05',name:'Your listing',channel:'Pasted text',price:p.price,days,soft,
       code:p.code,stamp:p.batch,seller:null,identity:'Unverified',photo:'No photo supplied',ship:null,duty:null,source:text,translationConfidence:p.terms.length ? 0.85 : 0.65};
   }
   const actors={seller:'sample-listing',translator:'field-translator',verifier:'registry-simulator',challenger:'collector-circle',system:'postbabel-console',buyer:'ava'};
@@ -130,6 +157,6 @@
   }
   function calldata(rootHash,id){return 'POSTBABEL|1|'+rootHash+'|'+id;}
   function fixedBodies(){return ['listing','translation','check','verdict'].map((kind,i)=>({v:1,id:'TEST-'+i,kind,actor:{role:'system',id:'selftest'},ts:1700000000000+i,lang:'en',span:null,facts:{i,note:'Fern'},confidence:null,severity:'info'}));}
-  const api={zero,canonical,hash,seal,verifyTape,Tape,getGloss,parse,evaluate,lineup,assessQuote,customOffer,claim,calldata,fixedBodies,hex};
+  const api={zero,canonical,hash,seal,verifyTape,Tape,getGloss,parse,evaluate,lineup,assessQuote,customOffer,claim,calldata,fixedBodies,hex,etaDays,cnNumber};
   root.PB=api;if(typeof module!=='undefined')module.exports=api;
 })(globalThis);

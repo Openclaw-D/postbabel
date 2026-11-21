@@ -131,17 +131,22 @@ const stages={
  5:s=>{
   const win=s.evals.winner;
   const headline=win?parts([win.name,money(win.price),eta(win.days)]):'Hold off';
-  let verdict='No offer met all three conditions. Request code, batch and seal photos. Recheck the official channel when verified stock is available.';
-  if(win)verdict=win.key==='resale-b'
-   ? 'Fastest verified sample. At $260, Resale B exceeds Ava’s $220 savings by $40. The $180 official-channel sample is a later restock with a six-week wait.'
-   : 'Fastest offer with a matching sample code and batch. Compare its delivered cost and ETA with your budget.';
+  const say=t=>'<span>'+esc(t)+'</span>';
+  let verdict=say('No offer met all three conditions. Request code, batch and seal photos.')+' '+say('Recheck the official channel when verified stock is available.');
+  if(win){
+   const alt=s.evals.alternative,budget=220,notes=[];
+   notes.push(say('Fastest verified sample: '+win.name+' at '+money(win.price)+', '+eta(win.days)+' to arrive.'));
+   if(Number.isFinite(win.price)&&win.price>budget)notes.push(say('That is $'+(win.price-budget).toFixed(2)+' over Ava’s $'+budget+' savings.'));
+   if(alt&&alt.key!==win.key)notes.push(say('The '+money(alt.price)+' '+alt.name+' is a later restock with a '+eta(alt.days)+' wait.'));
+   verdict=notes.join(' ');
+  }
   const rows=s.evals.rows.map(o=>{
    const gate=o.qualified?'Eligible':o.key==='official'&&o.codeState==='unused'?'Later restock':o.level==='warn'?'Review':'Rejected';
    return `<tr class="${win?.key===o.key?'selected':''}"><td><button data-act="inspectOffer" data-value="${esc(o.key)}">${esc(o.name)}</button></td>
     <td>${parts([money(o.price),eta(o.days)],' / ')}</td><td>${esc(o.codeState)}</td><td>${esc(o.stamp)}</td>
     <td>${Math.round(o.score*100)}%</td><td>${tag(gate,o.qualified?'pass':o.level)}</td></tr>`;
   }).join('');
-  return `<div class="panel"><div class="result ${win?'':'bad'}"><span class="subcap">Cross-channel verdict</span><h2>${headline}</h2><p>${esc(verdict)}</p></div>
+  return `<div class="panel"><div class="result ${win?'':'bad'}"><span class="subcap">Cross-channel verdict</span><h2>${headline}</h2><p>${verdict}</p></div>
    <div class="tablewrap"><table class="datatable"><thead><tr><th>Offer</th><th>Price / ETA</th><th>Code</th><th>Batch</th><th>Claim confidence</th><th>Gate</th></tr></thead><tbody>${rows}</tbody></table></div>
    <div class="controls">${btn('scenario',s.allFail?'Restore sample offers':'Try all-fail scenario','mini')}</div>
    ${win?'':'<div class="only-en">'+draftQuestions('en')+'</div><div class="only-zh">'+draftQuestions('zh')+'</div>'}</div>`;

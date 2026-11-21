@@ -163,6 +163,8 @@
   "Fastest verified sample. At $260, Resale B exceeds Ava’s $220 savings by $40. The $180 official-channel sample is a later restock with a six-week wait.": "通过核验的首批挂牌中，转售 B 到货最快。260 美元比 Ava 的预算多 40 美元。180 美元的模拟官方补货属于后续批次，需等六周。",
   "Fastest offer with a matching sample code and batch. Compare its delivered cost and ETA with your budget.": "这是通过样本核验后最快的挂牌，请再对照到手成本、到货日期和自己的预算。",
   "No offer met all three conditions. Request code, batch and seal photos. Recheck the official channel when verified stock is available.": "没有挂牌同时满足三项条件。先向卖家索取防伪码、批次钢印和封袋照片，再核对官方渠道库存。",
+  "No offer met all three conditions. Request code, batch and seal photos.": "没有挂牌同时满足三项条件。先向卖家索取防伪码、批次钢印和封袋照片。",
+  "Recheck the official channel when verified stock is available.": "等官方渠道有已核验库存时，再回来核对。",
   "Offer": "挂牌",
   "Price / ETA": "价格 / 到货时间",
   "Code": "防伪码",
@@ -429,6 +431,9 @@
     [/^Independent SHA-256 vector (\d+)$/, n => '独立 SHA-256 测试向量 '+n],
     [/^(PB-[\w-]+) \/ (\w+)$/, (id,type) => id+' / '+term(type)],
     [/^Provider returned HTTP (\d+)$/, n => '服务商返回 HTTP '+n],
+    [/^Fastest verified sample: (.+) at (\$[\d.,]+), (.+) to arrive\.$/, (name,price,eta) => '最快且已核验的样本：'+term(name)+'，'+price+'，'+translate(eta)+'到货。'],
+    [/^That is \$([\d.,]+) over Ava’s \$(\d+) savings\.$/, (d,budget) => '比 Ava 攒的 $'+budget+' 多出 $'+d+'。'],
+    [/^The (\$[\d.,]+) (.+) is a later restock with a (.+) wait\.$/, (price,name,eta) => price+' 的'+term(name)+'是后续补货批次，需等待 '+translate(eta)+'。'],
   ];
   function term(source){return Object.hasOwn(messages,source)?messages[source]:source;}
   function translate(source){
