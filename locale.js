@@ -1,6 +1,7 @@
 (function(root){
   'use strict';
   const setting='postbabel-language';
+  const revision=document.currentScript?new URL(document.currentScript.src).search:'';
   const originals=new WeakMap();
   const attributes=new WeakMap();
   const preserved='script,style,code,pre,textarea,.source,[data-keep-language]';
@@ -53,7 +54,7 @@
     if(root.PBChinese)return Promise.resolve();
     if(pending)return pending;
     pending=new Promise((resolve,reject)=>{
-      const script=document.createElement('script');script.src='zh.js';
+      const script=document.createElement('script');script.src='zh.js'+revision;
       script.onload=()=>root.PBChinese?resolve():reject(Error('Chinese catalog unavailable'));
       script.onerror=()=>{pending=null;script.remove();reject(Error('Chinese catalog unavailable'));};
       document.head.append(script);
@@ -67,7 +68,7 @@
     if(change!==sequence)return;
     current=lang;
     document.documentElement.lang=lang==='zh'?'zh-CN':'en';
-    document.title=lang==='zh'?'PostBabel · 证据记录':'PostBabel · Claim Tape';
+    document.title=lang==='zh'?'PostBabel · 报价比较':'PostBabel · Compare offers';
     buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.language===lang)));
     apply(document.body,true);
     if(remember){

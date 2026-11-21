@@ -1,6 +1,25 @@
 (function(root){
   "use strict";
   const messages = {
+  "The purchase brief includes an invoice. Supply authorisation is still pending.": "采购简报附有发票，供货授权仍待核实。",
+  "Enable field review in integration settings.": "在集成设置中开启实时字段核验。",
+  "Enable testnet access in integration settings.": "在集成设置中开启测试网连接。",
+  "Integration settings": "集成设置",
+  "On this page": "页内导航",
+  "Sourcing": "批量采购",
+  "Collector": "收藏比价",
+  "Verification workspace": "详细核验",
+  "About & settings": "关于与设置",
+  "Original quote": "供应商原话",
+  "Delivery terms": "交付条款",
+  "View signed record": "查看证据记录",
+  "Open detailed checks": "展开逐项核验",
+  "Question for the supplier": "给供应商的追问",
+  "Call follow-up": "现场通话核实",
+  "What the supplier said": "对方原话",
+  "A question to ask next": "下一句可以这样问",
+  "Sample call · Duixi Core": "模拟通话 · 对席 Core",
+  "The sample call note could not be loaded. Reopen this note to try again.": "通话记录加载失败，请重新打开。",
   "Tape": "证据记录",
   "Audit": "审计",
   "Network": "验证网络",
@@ -416,6 +435,10 @@
   ];
   function term(source){return Object.hasOwn(messages,source)?messages[source]:source;}
   function translate(source){
+    for(const dictionary of [root.PBStory,root.PBCompare]){
+      const local=dictionary?.zh?.(source);
+      if(local&&local!==source)return local;
+    }
     if(Object.hasOwn(messages,source))return messages[source];
     for(const [pattern,format] of rules){const match=source.match(pattern);if(match)return format(...match.slice(1));}
     return source;

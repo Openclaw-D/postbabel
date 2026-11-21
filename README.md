@@ -10,7 +10,7 @@ The collector case compares four sample offers for POP MART’s **LABUBU Green G
 
 Switch between **EN** and **中文** in the top-right corner. The language choice is saved on this device. Source listings, hash values and bilingual seller drafts retain their original text.
 
-Choose **Compare supplier quotes** for the sourcing brief or **Start manually** for the individual collector case. The **Verdict** step includes an all-fail scenario. The Audit, Network and Evolve tabs operate on the same in-memory claim tape. Refresh starts a new session.
+Set your criteria on the homepage before comparing three supplier quotes or four collector listings. A six-axis chart pairs the selected requirements with the evidence in each offer. Read the original quote or a recorded follow-up from Duixi Core, produced locally from three synthetic calls in rules mode. The verification workspace contains the seven-step case, signed records, disputes and the version history.
 
 ### Local copy
 

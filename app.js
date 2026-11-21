@@ -2,7 +2,8 @@
 'use strict';
 const E=PB,D=PBData,V=PBViews,$=id=>document.getElementById(id);
 const requestId='ava-green-grape';
-const state={supplier:'A',brief:D.brief,view:'Tape',stage:0,built:0,primary:'resale-a',inspect:'resale-a',custom:null,allFail:false,tape:new E.Tape(),
+const newComparison=()=>({picked:[],submitted:false,activeId:null});
+const state={localBackend:localBackend(),supplier:'A',brief:D.brief,comparisons:{sourcing:newComparison(),collector:newComparison()},view:'Tape',stage:0,built:0,primary:'resale-a',inspect:'resale-a',custom:null,allFail:false,tape:new E.Tape(),
   evals:E.lineup(),integrity:null,tampered:false,filters:{kind:'',actor:'',severity:''},version:0,cycle:0,options:loadOptions(),tests:[]};
 const optionsKey='postbabel-optional-v1'; // keys are kept only for this tab session
 function loadOptions(){try{return JSON.parse(sessionStorage.getItem('postbabel-optional-v1')||'{}');}catch{return {};}}
@@ -15,11 +16,24 @@ function closeDialog(){if($('dialog').open)$('dialog').close();}
 async function copy(text){try{await navigator.clipboard.writeText(text);notice('Copied to clipboard');}catch{openDialog('Copy text','<textarea readonly aria-label="Text to copy">'+V.esc(text)+'</textarea>');$('dialogBody').querySelector('textarea').select();}}
 function render(){
  document.body.dataset.view=state.view;document.body.dataset.stage=String(state.stage);
- $('views').innerHTML=['Tape','Audit','Network','Evolve'].map(n=>V.btn('view',n,n===state.view?'on':'',n)).join('');
- const draw={Tape:()=>state.stage?V.stage(state):V.home(state),Brief:()=>V.sourcing(state),Audit:()=>V.audit(state),Network:()=>V.network(state),Evolve:()=>V.evolve(state),
+ const story=state.view==='Tape'&&state.stage===0;
+ document.body.dataset.layout=story?'story':'workspace';
+ const about=document.querySelector('.footerTools [data-act="settings"]');
+ if(about){about.textContent=state.localBackend?'Integration settings':'About PostBabel';PBLocale.apply(about);}
+ $('views').hidden=story;$('sectionNav').hidden=!story;$('rail').hidden=story;
+ $('views').innerHTML=story?'':['Tape','Audit','Network','Evolve'].map(n=>V.btn('view',n,n===state.view?'on':'',n)).join('');
+ const draw={Tape:()=>state.stage?V.stage(state):PBStory.home(state),Audit:()=>V.audit(state),Network:()=>V.network(state),Evolve:()=>V.evolve(state),
   Selftest:()=>V.cap('Diagnostics','Protocol self-test.','Fixed synthetic records, independent expected digests, deterministic decisions and reversible integrity checks.')+'<div class="panel" id="selftests">'+state.tests.map(t=>'<div class="test"><span>'+V.esc(t.name)+'</span>'+V.tag(t.ok?'PASS':'FAIL',t.ok?'pass':'fail')+'</div>').join('')+'</div>'};
- $('work').innerHTML=draw[state.view]();$('rail').innerHTML=V.trace(state);
+ $('work').innerHTML=draw[state.view]();$('rail').innerHTML=story?'':V.trace(state);
  for(const id of ['views','work','rail'])PBLocale.apply($(id));
+ const step=$('work').querySelector('.stepbar button.current');
+ if(step){
+  const bar=step.parentElement;
+  if(bar.scrollWidth>bar.clientWidth){
+   const offset=step.getBoundingClientRect().left-bar.getBoundingClientRect().left;
+   bar.scrollLeft+=offset-(bar.clientWidth-step.offsetWidth)/2;
+  }
+ }
 }
 function add(id,kind,role,facts,extra){return state.tape.add(E.claim(id,kind,role,facts,extra));}
 function priceFacts(o){return {offer:o.key,price:o.price,currency:'USD',channel:o.channel,source:o.source,etaDays:o.days,code:o.code,batch:o.stamp,seller:o.seller};}
@@ -141,7 +155,7 @@ async function loadCatalog(){
   if(!res.ok)return;
   const data=await res.json();
   if(data.mode==='SIMULATED WEB DATA'&&Array.isArray(data.offers)&&data.offers.length===D.offers.length&&data.offers.every((o,i)=>o.key===D.offers[i].key&&typeof o.source==='string'))D.offers.splice(0,D.offers.length,...data.offers);
-  if(data.brief?.id===D.brief.id&&Array.isArray(data.brief.offers)&&data.brief.offers.length===3&&data.brief.offers.every(o=>o.evidence&&typeof o.source==='string'&&typeof o.translation==='string'))state.brief=data.brief;
+  if(data.brief?.id===D.brief.id&&Array.isArray(data.brief.offers)&&data.brief.offers.length===3&&data.brief.offers.every(o=>o.evidence&&o.logistics&&typeof o.source==='string'&&typeof o.translation==='string'))state.brief=data.brief;
  }catch{/* The bundled catalog also supports offline replay. */}
 }
 async function crossCheck(scenario='base'){
@@ -160,26 +174,132 @@ async function crossCheck(scenario='base'){
  :'<p>'+ (scenario==='sourcing'?'A live result has not been recorded for these supplier quotes. Each evidence gap comes from the sample brief.':'A live result has not been recorded for these listings. The verdict on this page uses the simulated registry, batch and seller evidence.')+'</p>';
  openDialog('Jev cross-check',details+'<p class="note">The public site reads cached results. Paid inference runs separately.</p>'+(localBackend()?'<p>Use the local project setup to run a test with your own Jev credential.</p>':''));
 }
-async function selectSupplier(id){
- const o=state.brief.offers.find(row=>row.id===id);if(!o)return;
- requireClean();state.supplier=id;state.view='Brief';
- const review=E.assessQuote(o,state.brief);
- await add(o.ref,'listing','seller',{source:o.ref,unitPrice:o.unitPrice,currency:state.brief.currency,quantity:state.brief.quantity,ruleResult:review,sourceQuote:o.source},{lang:'zh',span:review.span});
- state.integrity=null;render();
+function comparisonMode(value){
+ return value==='sourcing'||value==='collector';
 }
-async function act(a,v){
+function updateFlow(mode,focus){
+ const slot=$(mode+'Flow');
+ if(!slot)return;
+ slot.innerHTML=PBStory.flow(mode,state);
+ PBLocale.apply(slot);
+ if(focus==='offer'){
+  const current=slot.querySelector('[data-act="pickOffer"][aria-pressed="true"]');
+  if(current)current.focus({preventScroll:true});
+  return;
+ }
+ const target=focus==='result'?slot.querySelector('.comparisonResult'):slot.querySelector('input[name="criteria"]');
+ if(target)target.focus({preventScroll:true});
+ slot.scrollIntoView({block:'start',behavior:'instant'});
+}
+function syncPicks(form){
+ const mode=form.dataset.compare;
+ if(!comparisonMode(mode))return [];
+ const valid=new Set(PBCompare.axes(mode).map(axis=>axis.id));
+ const picked=[...form.querySelectorAll('input[name="criteria"]:checked')].map(el=>el.value).filter(id=>valid.has(id));
+ state.comparisons[mode].picked=picked;
+ const submit=form.querySelector('[type="submit"]');
+ if(submit)submit.disabled=!picked.length;
+ return picked;
+}
+async function logSupplier(id){
+ requireClean();
+ const offer=state.brief.offers.find(o=>o.id===id);
+ if(!offer)return;
+ const review=E.assessQuote(offer,state.brief);
+ await add(offer.ref,'listing','seller',{
+  source:offer.ref,unitPrice:offer.unitPrice,currency:state.brief.currency,quantity:state.brief.quantity,
+  ruleResult:review,sourceQuote:offer.source,logisticsQuote:offer.logistics?.source,...(offer.briefDocument?{briefDocument:offer.briefDocument}:{})
+ },{lang:'zh',span:review.span});
+ state.integrity=null;
+}
+async function compare(mode,form){
+ if(!comparisonMode(mode)||!form.isConnected)return;
+ const picked=syncPicks(form);
+ if(!picked.length)return;
+ const comparison=state.comparisons[mode],ranked=PBCompare.rank(mode,picked,state.brief);
+ if(!ranked.length)return;
+ const first=ranked[0].id;
+ if(mode==='sourcing'){await logSupplier(first);state.supplier=first;}
+ comparison.activeId=first;comparison.submitted=true;
+ updateFlow(mode,'result');
+}
+async function pickOffer(mode,id){
+ if(!comparisonMode(mode))return;
+ const comparison=state.comparisons[mode];
+ if(!comparison.submitted||!comparison.picked.length)return;
+ const rows=PBCompare.rank(mode,comparison.picked,state.brief);
+ if(!rows.some(row=>row.id===id))return;
+ if(mode==='sourcing'){await logSupplier(id);state.supplier=id;}
+ comparison.activeId=id;
+ updateFlow(mode,'offer');
+}
+function editCriteria(mode){
+ if(!comparisonMode(mode))return;
+ state.comparisons[mode].submitted=false;
+ updateFlow(mode,'criteria');
+}
+function sourceExcerpt(text,span){
+ if(!span)return V.esc(text);
+ return V.esc(text.slice(0,span.start))+'<mark>'+V.esc(text.slice(span.start,span.end))+'</mark>'+V.esc(text.slice(span.end));
+}
+function sourceDialog(id){
+ const offer=state.brief.offers.find(o=>o.id===id);
+ if(!offer)return;
+ const reviewed=state.comparisons.sourcing.submitted;
+ const span=reviewed?E.assessQuote(offer,state.brief).span:null;
+ const extra=offer.logistics;
+ openDialog('Supplier '+id,'<div class="evidenceDialog"><h3>Original quote</h3><blockquote lang="zh-CN" data-keep-language>'+sourceExcerpt(offer.source,span)+'</blockquote>'+
+  '<p class="englishGloss" lang="en" data-keep-language>'+V.esc(offer.translation)+'</p>'+
+  (extra?'<h3>Delivery terms</h3><blockquote lang="zh-CN" data-keep-language>'+V.esc(extra.source)+'</blockquote><p class="englishGloss" lang="en" data-keep-language>'+V.esc(extra.translation)+'</p>':'')+
+  (offer.briefDocument==='invoice'?'<p class="note">The purchase brief includes an invoice. Supply authorisation is still pending.</p>':'')+
+  (reviewed?'<div class="controls">'+V.btn('claim','View signed record','mini',offer.ref)+V.btn('jev','Jev cross-check','mini','sourcing')+'</div>':'')+'</div>');
+}
+function listingDialog(id){
+ const row=D.offers.find(o=>o.key===id);
+ if(!row)return;
+ openDialog(row.name,'<div class="evidenceDialog"><h3>Original listing</h3><blockquote class="source" data-keep-language>'+V.esc(row.source)+'</blockquote>'+
+  (state.comparisons.collector.submitted?'<div class="controls">'+V.btn('inspectOffer','Open detailed checks','mini',id)+'</div>':'')+'</div>');
+}
+function followUp(id){
+ const row=state.brief.offers.find(o=>o.id===id);
+ if(!row)return;
+ openDialog('Question for the supplier','<div class="evidenceDialog"><p data-keep-language lang="zh-CN">'+V.esc(row.zh)+'</p><p data-keep-language lang="en">'+V.esc(row.en)+'</p><div class="controls">'+V.btn('copySupplier','Copy both languages','mini',id)+'</div></div>');
+}
+let callCache;
+async function callNotes(id){
+ if(!state.brief.offers.some(o=>o.id===id))return;
+ if(!callCache){
+  try{
+   const response=await fetch('api/v1/call-review.json',{signal:AbortSignal.timeout(4000)});
+   if(!response.ok)throw Error();
+   const data=await response.json();
+   if(data.sample===true&&data.mode==='recorded-rules')callCache=data.supplier;
+  }catch{}
+ }
+ const row=callCache?.[id];
+ if(!row||!['en','zh'].every(lang=>row.cards?.[lang]?.evidence?.includes(row.id)))return openDialog('Call follow-up','<p>The sample call note could not be loaded. Reopen this note to try again.</p>');
+ const stamp=Math.floor(row.atSeconds/60)+':'+String(row.atSeconds%60).padStart(2,'0');
+ // Both recorded questions stay in the DOM so a language switch works with the dialog open.
+ const question=['en','zh'].map(lang=>'<p class="only-'+lang+'" data-keep-language lang="'+lang+'">'+V.esc(row.cards[lang].question)+'</p>').join('');
+ openDialog('Call follow-up','<div class="evidenceDialog"><p class="note">Sample call · Duixi Core</p><h3>What the supplier said</h3><blockquote data-keep-language lang="zh-CN"><small>'+V.esc(stamp)+'</small> '+V.esc(row.quote)+'</blockquote><p class="englishGloss" lang="en" data-keep-language>'+V.esc(row.gloss)+'</p><h3>A question to ask next</h3>'+question+'</div>');
+}
+async function act(a,v,mode){
  switch(a){
  case 'close':return closeDialog();
- case 'home':state.view='Tape';state.stage=0;return render();
- case 'brief':return selectSupplier(state.supplier);
- case 'supplier':return selectSupplier(v);
- case 'copySupplier':{const o=state.brief.offers.find(x=>x.id===state.supplier);return copy(o.en+'\n'+o.zh);}
- case 'begin':return go(1);
+ case 'home':state.view='Tape';state.stage=0;render();window.scrollTo({top:0,behavior:'instant'});return;
+ case 'editCriteria':return editCriteria(v);
+ case 'pickOffer':return pickOffer(mode,v);
+ case 'quoteSource':if(state.comparisons.sourcing.submitted)await logSupplier(v);return sourceDialog(v);
+ case 'listingSource':return listingDialog(v);
+ case 'followUp':return followUp(v);
+ case 'callNotes':return callNotes(v);
+ case 'copySupplier':{const o=state.brief.offers.find(x=>x.id===(v||state.supplier));return o&&copy(o.en+'\n'+o.zh);}
+ case 'begin':closeDialog();await go(1);window.scrollTo({top:0,behavior:'instant'});return;
  case 'stage':return go(Number(v));
  case 'view':state.view=v;return render();
  case 'claim':return claimDetails(v);
  case 'inspect':state.inspect=v;return render();
- case 'inspectOffer':state.inspect=v;return go(4);
+ case 'inspectOffer':closeDialog();state.inspect=v;await go(4);window.scrollTo({top:0,behavior:'instant'});return;
  case 'sample':await reset(v,null,state.allFail);return go(1);
  case 'useText':{const raw=$('sourceText').value.trim();if(!raw)throw Error('Paste a listing first.');if(raw!==V.source(state)){const known=D.offers.find(o=>o.source===raw);await reset(known?.key||'resale-a',known?null:E.customOffer(raw),state.allFail);}return go(2);}
  case 'glossary':return openDialog('Collector glossary',D.glossary.map(([zh,en,n])=>'<div class="gloss"><b>'+V.esc(zh)+' / '+V.esc(en)+'</b><p>'+V.esc(n)+'</p></div>').join(''));
@@ -200,7 +320,20 @@ async function act(a,v){
  case 'liveTranslate':return liveTranslate();case 'confirmReview':return confirmReview();case 'anchorLive':return anchorReview();case 'confirmAnchor':return broadcast();
  }
 }
-document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)enqueue(()=>act(b.dataset.act,b.dataset.value));});
-document.addEventListener('change',e=>{if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;render();}});
-(async()=>{await Promise.all([loadCatalog(),PBLocale.ready]);await reset();const params=new URLSearchParams(location.search);if(params.get('selftest')==='1'){await new Promise((yes,no)=>{const script=document.createElement('script');script.src='selftest.js';script.onload=yes;script.onerror=no;document.head.append(script);});state.tests=await pbSelftest();state.view='Selftest';}render();})().catch(e=>{$('work').textContent='Unable to open the replay: '+e.message;});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(b&&!b.disabled)enqueue(()=>act(b.dataset.act,b.dataset.value,b.dataset.mode));});
+document.addEventListener('submit',e=>{const form=e.target;if(!form.matches('form[data-compare]'))return;e.preventDefault();enqueue(()=>compare(form.dataset.compare,form));});
+document.addEventListener('change',e=>{const form=e.target.closest('form[data-compare]');if(form&&e.target.name==='criteria'){syncPicks(form);return;}if(e.target.dataset.filter){state.filters[e.target.dataset.filter]=e.target.value;render();}});
+active=(async()=>{
+ await PBLocale.ready;
+ const diagnostics=new URLSearchParams(location.search).get('selftest')==='1';
+ if(!diagnostics)render();
+ await loadCatalog();
+ await reset();
+ if(diagnostics){
+  await new Promise((yes,no)=>{const script=document.createElement('script');script.src='selftest.js';script.onload=yes;script.onerror=no;document.head.append(script);});
+  state.tests=await pbSelftest();state.view='Selftest';render();
+ }else if(location.hash==='#sourcing'||location.hash==='#collector'){
+  document.getElementById(location.hash.slice(1))?.scrollIntoView();
+ }
+})().catch(e=>{$('work').textContent='Unable to open PostBabel: '+e.message;});
 })();

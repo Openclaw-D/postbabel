@@ -48,21 +48,34 @@
         "supply": "not supplied"
       },
       "source": "没问题，都能安排。100 只绿葡萄同版，单价 38 美元。授权供货凭证稍后提供。",
-      "translation": "We can arrange 100 of the same Green Grape edition at $38 each. Supply authorisation paperwork will follow."
+      "translation": "We can arrange 100 of the same Green Grape edition at $38 each. Supply authorisation paperwork will follow.",
+      "logistics": {
+        "dispatchDays": 10,
+        "freightIncluded": false,
+        "source": "这份报价不含运费，付款后十天内发货。",
+        "translation": "This quote excludes freight. We dispatch within ten days of payment."
+      }
     },
     {
       "id": "B",
       "ref": "Q-B.0",
       "unitPrice": 35,
-      "en": "Please confirm the exact edition and show the batch label for the 100 pieces quoted.",
-      "zh": "请确认这 100 件的具体版次，并提供对应的批次标签。",
+      "en": "Please confirm the exact edition and show the batch label for all 100 pieces. Please provide supply authorisation separately from the invoice.",
+      "zh": "请确认这 100 只的具体版次，提供批次标签，并在发票之外另附供货授权凭证。",
       "evidence": {
         "edition": "not supplied",
         "stock": "not supplied",
         "supply": "not supplied"
       },
       "source": "绿葡萄可报 100 只，单价 35 美元。具体版次待确认。",
-      "translation": "We can quote 100 Green Grapes at $35 each. The exact edition still needs confirmation."
+      "translation": "We can quote 100 Green Grapes at $35 each. The exact edition still needs confirmation.",
+      "logistics": {
+        "dispatchDays": 7,
+        "freightIncluded": true,
+        "source": "这个价格含运费，付款后七天内发货。具体版次还在核对。",
+        "translation": "The price includes freight. We dispatch within seven days of payment. We are still checking the edition."
+      },
+      "briefDocument": "invoice"
     },
     {
       "id": "C",
@@ -76,7 +89,13 @@
         "supply": "not supplied"
       },
       "source": "同版绿葡萄单价 42 美元。100 只能否全发，要等仓库确认库存。",
-      "translation": "The same edition is $42 each. The warehouse still needs to confirm stock for all 100."
+      "translation": "The same edition is $42 each. The warehouse still needs to confirm stock for all 100.",
+      "logistics": {
+        "dispatchDays": null,
+        "freightIncluded": false,
+        "source": "库存确认后才能定交付日期，运费另外算。",
+        "translation": "We can give a delivery date once stock is confirmed. Freight is extra."
+      }
     }
   ]
 };

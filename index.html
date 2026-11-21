@@ -1,16 +1,41 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff"><title>PostBabel · Claim Tape</title>
-<link rel="icon" href="data:,"><link rel="preload" as="image" href="assets/labubu-green-grape.webp" fetchpriority="high"><link rel="stylesheet" href="style.css">
-<script defer src="lib/sha256.js"></script><script defer src="data.js"></script><script defer src="engine.js"></script>
-<script defer src="views.js"></script><script defer src="locale.js"></script><script defer src="app.js"></script>
-</head><body>
-<header class="top"><button class="brand" data-act="home" aria-label="PostBabel home"><i class="reel"></i>PostBabel<span>.</span></button>
-<nav id="views" aria-label="Console views"></nav><div class="system"><span class="replay-status"><b class="statusdot"></b> Sample data</span><button data-act="settings" class="settings">Settings</button><div class="language" role="group" aria-label="Display language"><button type="button" data-language="en" data-keep-language lang="en" aria-label="English" aria-pressed="true">EN</button><button type="button" data-language="zh" data-keep-language lang="zh-CN" aria-label="中文" aria-pressed="false">中文</button></div></div></header>
-<main class="shell"><section id="work" aria-live="off"></section><aside id="rail" aria-label="Claim tape"></aside></main>
-<footer><span>PostBabel <b>/</b> Protocol console</span><span>SAMPLE listings · SIMULATED registry · RECORDED CYCLE · DRY-RUN anchor · OPTIONAL live</span></footer>
-<dialog id="dialog"><div class="dialogbar"><span id="dialogTitle"></span><button class="quiet" data-act="close">Close ×</button></div><div id="dialogBody"></div></dialog>
-<div id="notice" role="status"></div>
-</body></html>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Choose what matters for a LABUBU purchase. Compare the offers, read the original words, and see what to ask next.">
+  <title>PostBabel · Compare offers</title>
+  <link rel="icon" href="data:,">
+  <link rel="preload" as="image" imagesrcset="assets/babel.webp 439w, assets/babel-medium.webp 800w, assets/babel-hero.webp 1240w" imagesizes="(max-width: 760px) 100vw, 55vw" fetchpriority="high">
+  <link rel="stylesheet" href="style.css?v=20261121-criteria">
+  <script defer src="lib/sha256.js"></script>
+  <script defer src="data.js?v=20261121-criteria"></script>
+  <script defer src="engine.js?v=20261121-criteria"></script>
+  <script defer src="comparison.js?v=20261121-criteria"></script>
+  <script defer src="views.js?v=20261121-criteria"></script>
+  <script defer src="story.js?v=20261121-criteria"></script>
+  <script defer src="locale.js?v=20261121-criteria"></script>
+  <script defer src="app.js?v=20261121-criteria"></script>
+</head>
+<body data-layout="story">
+  <header class="top">
+    <div class="topInner">
+      <button type="button" class="brand" data-act="home" aria-label="PostBabel home"><i class="brandMark" aria-hidden="true"></i>PostBabel</button>
+      <nav id="sectionNav" aria-label="On this page"><a href="#sourcing">Sourcing</a><a href="#collector">Collector</a></nav>
+      <nav id="views" aria-label="Console views" hidden></nav>
+      <div class="language" role="group" aria-label="Display language">
+        <button type="button" data-language="en" data-keep-language lang="en" aria-label="English" aria-pressed="true">EN</button>
+        <button type="button" data-language="zh" data-keep-language lang="zh-CN" aria-label="中文" aria-pressed="false">中文</button>
+      </div>
+    </div>
+  </header>
+  <main class="shell"><div id="work"></div><aside id="rail" aria-label="Claim tape" hidden></aside></main>
+  <footer class="storyFooter"><span>PostBabel</span><div class="footerTools"><button type="button" data-act="begin">Verification workspace</button><button type="button" data-act="settings">About &amp; settings</button></div></footer>
+  <dialog id="dialog" aria-labelledby="dialogTitle">
+    <div class="dialogbar"><span id="dialogTitle"></span><button type="button" class="quiet" data-act="close">Close ×</button></div>
+    <div id="dialogBody"></div>
+  </dialog>
+  <div id="notice" role="status" aria-live="polite"></div>
+</body>
+</html>

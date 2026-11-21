@@ -7,6 +7,8 @@
 !style.css
 !data.js
 !views.js
+!comparison.js
+!story.js
 !app.js
 !engine.js
 !selftest.js
@@ -19,6 +21,8 @@
 !assets/
 !assets/labubu-green-grape.webp
 !assets/babel.webp
+!assets/babel-medium.webp
+!assets/babel-hero.webp
 !api/
 !api/v1/
 !api/v1/*.json
